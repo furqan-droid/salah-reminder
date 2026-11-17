@@ -1,6 +1,6 @@
 /**
- * Salah Reminder v3.0 - Complete Application Logic
- * Includes: Multi-language (Urdu/English/Arabic) with RTL/LTR switching,
+ * Salah Reminder v3.1 - Complete Application Logic
+ * Includes: Multi-language (Urdu/English/Arabic) with Urdu digit conversion,
  * Custom Reminder Offsets, AudioContext Ringtones, Volume Control,
  * Web Push Notifications, Custom User Name, City Presets & Calculation Methods.
  */
@@ -247,7 +247,7 @@ function updateClock() {
     if (now.toDateString() !== currentDateStr) initApp();
 
     const tStr = now.toLocaleTimeString('en-US', { hour12: false });
-    document.getElementById('currentTime').textContent = currentLang === 'ur' ? convertToUrduNumbers(tStr) : tStr;
+    document.getElementById('currentTime').textContent = (currentLang === 'ur') ? convertToUrduNumbers(tStr) : tStr;
 
     const loc = { ur: 'ur-PK', en: 'en-US', ar: 'ar-SA' }[currentLang] || 'ur-PK';
     document.getElementById('currentDate').textContent = now.toLocaleDateString(loc, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -497,7 +497,7 @@ function formatTimeLocalized(time) {
     } else if (currentLang === 'ar') {
         const p = hour >= 12 ? 'مساءً' : 'صباحاً';
         hour = hour % 12 || 12;
-        return `${hour}:${m} ${p}`;
+        return `${convertToUrduNumbers(hour)}:${convertToUrduNumbers(m)} ${p}`;
     } else {
         const p = hour >= 12 ? 'بجے' : 'صبح';
         hour = hour % 12 || 12;
