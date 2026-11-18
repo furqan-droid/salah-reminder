@@ -25,12 +25,12 @@ body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #ff
 .status-indicator { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; background: rgba(255,255,255,0.1); }
 .status-indicator.active { background: rgba(76, 175, 80, 0.35); }
 .status-indicator.inactive { background: rgba(244, 67, 54, 0.35); }
-.settings-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+.settings-header { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); }
 .setting-group h3 { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15); }
 .setting-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .setting-item:last-child { border-bottom: none; }
 .setting-select, .setting-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 8px 10px; max-width: 55%; }
-.setting-input[type="number"] { width: 80px; text-align: center; }
+.setting-input[type="time"], .setting-input[type="text"] { width: 130px; text-align: center; }
 .setting-select option { background: #1a472a; color: #fff; }
 .setting-range { width: 45%; }
 #saveSettingsBtn { width: 100%; background: #4CAF50; padding: 14px; font-size: 1.1em; font-weight: bold; border-radius: 12px; border: none; color: #fff; cursor: pointer; }
@@ -44,5 +44,5 @@ body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #ff
 .btn-answer, .btn-decline, .btn-end-call { padding: 16px 26px; border: none; border-radius: 30px; font-size: 1.05em; font-weight: bold; cursor: pointer; color: #fff; }
 .btn-answer { background: #4CAF50; }
 .btn-decline, .btn-end-call { background: #f44336; }
-.reminder-text { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin: 25px 0; line-height: 1.7; font-size: 1.15em; }
+.reminder-text { background: rgba(255,255,255,0.1); border-radius: 18px; padding: 25px; margin: 25px 0; line-height: 1.7; font-size: 1.15em; }
 .audio-badge { background: rgba(76, 175, 80, 0.25); padding: 4px 10px; border-radius: 12px; display: inline-block; }
