@@ -1,7 +1,7 @@
 /**
- * Salah Reminder v4.3 - Complete Application Logic
- * Includes: 12-Hour format across all languages, minutes-based offset prayer reminders, 
- * Nightly 10:30 PM (22:30) Tracker Reminder, dynamic RTL/LTR, GPS, and Wake Lock.
+ * Salah Reminder v4.1 - Complete Application Logic
+ * Includes: 12-Hour format across all languages, dynamic RTL/LTR writing direction, 
+ * GPS Geolocation, Wake Lock API, and Advanced TTS Voice Matching.
  */
 
 const translations = {
@@ -26,8 +26,8 @@ const translations = {
         secNotifications: "🔔 نوٹیفکیشن",
         enableNotif: "براؤزر نوٹیفکیشن کی اجازت:",
         allowBtn: "اجازت دیں",
-        firstReminderLabel: "پہلی یاد دہانی (منٹ پہلے):",
-        secondReminderLabel: "دوسری یاد دہانی (منٹ):",
+        firstReminderLabel: "پہلی یاد دہانی کا وقت:",
+        secondReminderLabel: "دوسری یاد دہانی کا وقت:",
         secSound: "🎵 آواز اور رنگ ٹون",
         enableSound: "آواز فعال کریں",
         volumeLabel: "آواز کی سطح:",
@@ -65,8 +65,8 @@ const translations = {
         secNotifications: "🔔 Notifications",
         enableNotif: "Browser Notification Permission:",
         allowBtn: "Allow",
-        firstReminderLabel: "First Reminder (Mins Before):",
-        secondReminderLabel: "Second Reminder (Offset Mins):",
+        firstReminderLabel: "First Reminder Time:",
+        secondReminderLabel: "Second Reminder Time:",
         secSound: "🎵 Sound & Ringtone",
         enableSound: "Enable Sound",
         volumeLabel: "Volume Level:",
@@ -104,8 +104,8 @@ const translations = {
         secNotifications: "🔔 الإشعارات",
         enableNotif: "إذن إشعارات المتصفح:",
         allowBtn: "سماح",
-        firstReminderLabel: "التذكير الأول (دقائق قبل):",
-        secondReminderLabel: "التذكير الثاني (دقائق):",
+        firstReminderLabel: "وقت التذكير الأول:",
+        secondReminderLabel: "وقت التذكير الثاني:",
         secSound: "🎵 الصوت ونغمة الرنين",
         enableSound: "تفعيل الصوت",
         volumeLabel: "مستوى الصوت:",
@@ -126,19 +126,16 @@ const translations = {
 
 const defaultVoiceScripts = {
     en: {
-        first: ["Attention {name}. {prayer} prayer is coming up in {mins} minutes. Please finish your tasks and get ready for Wudu."],
-        second: ["Assalamu Alaikum {name}. It is now time for {prayer} prayer. Please rise and proceed for Salah. May Allah accept your worship."],
-        tracker: ["Assalamu Alaikum {name}. It is 10:30 PM. Please take a moment to review and mark your daily Salah tracker."]
+        first: ["Attention {name}. {prayer} prayer time is approaching at {time}."],
+        second: ["Assalamu Alaikum {name}. It is now time for {prayer} prayer at {time}."]
     },
     ar: {
-        first: ["تنبيه {name}. اقتربت صلاة {prayer} خلال {mins} دقائق. يرجى الاستعداد للوضوء."],
-        second: ["السلام عليكم {name}. حان الآن وقت صلاة {prayer}. تقبل الله طاعتكم."],
-        tracker: ["السلام عليكم {name}. الساعة العاشرة والنصف مساءً. يرجى مراجعة وتحديث متتبع الصلاة اليومي."]
+        first: ["تنبيه {name}. اقتربت صلاة {prayer} في تمام الساعة {time}."],
+        second: ["السلام عليكم {name}. حان الآن وقت صلاة {prayer} في تمام الساعة {time}."]
     },
     ur: {
-        first: ["توجہ فرمائیں {name}۔ {prayer} کی نماز میں {mins} منٹ باقی ہیں۔ براہ کرم اپنے کام ختم کر کے وضو کی تیاری کریں۔"],
-        second: ["السلام علیکم {name}۔ {prayer} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں باجماعت نماز کی توفیق عطا فرمائے۔"],
-        tracker: ["السلام علیکم {name}۔ رات کے ساڑھے دس بج چکے ہیں۔ براہ کرم اپنے نماز ٹریکر کو مکمل کریں اور آج کی نمازیں مارک کریں۔"]
+        first: ["توجہ فرمائیں {name}۔ {prayer} کی نماز کا وقت {time} پر ہونے والا ہے۔"],
+        second: ["السلام علیکم {name}۔ {prayer} کی نماز کا وقت {time} ہو چکا ہے۔"]
     }
 };
 
@@ -168,8 +165,8 @@ let selectedCityKey = localStorage.getItem('cityKey') || 'karachi';
 let customLat = parseFloat(localStorage.getItem('customLat') || '0');
 let customLng = parseFloat(localStorage.getItem('customLng') || '0');
 let calcMethod = localStorage.getItem('calcMethod') || 'Karachi';
-let firstReminderMins = parseInt(localStorage.getItem('firstReminderMins') || '5', 10);
-let secondReminderOffset = parseInt(localStorage.getItem('secondReminderOffset') || '0', 10);
+let firstReminderTime = localStorage.getItem('firstReminderTime') || '05:00';
+let secondReminderTime = localStorage.getItem('secondReminderTime') || '12:00';
 let currentDateStr = new Date().toDateString();
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -467,29 +464,19 @@ function updateClock() {
     updateTimeRemaining();
 }
 
-function addMinutes(timeStr, mins) {
-    const [h, m] = timeStr.split(':').map(Number);
-    let total = (h * 60 + m + mins) % 1440;
-    if (total < 0) total += 1440;
-    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-}
-
 function checkReminders() {
     const cityTime = getSelectedCityTime();
     const nowStr = `${String(cityTime.getHours()).padStart(2, '0')}:${String(cityTime.getMinutes()).padStart(2, '0')}`;
     
-    // Check Salah prayer reminders
     for (let k in todayPrayers) {
         const p = todayPrayers[k];
-        const r1 = addMinutes(p.time, -firstReminderMins);
-        const r2 = addMinutes(p.time, secondReminderOffset);
         
-        if (nowStr === r1 || nowStr === r2) {
-            const isFirst = nowStr === r1;
+        if (nowStr === firstReminderTime || nowStr === secondReminderTime) {
+            const isFirst = nowStr === firstReminderTime;
             const storageKey = `notif_${p.key}_${isFirst ? '1' : '2'}_${cityTime.toDateString()}`;
             if (!localStorage.getItem(storageKey)) {
                 localStorage.setItem(storageKey, 'true');
-                triggerSystemNotification(p.name, isFirst ? `Reminder: ${firstReminderMins} mins until ${p.name}` : `It is time for ${p.name}`, `${p.key}_${isFirst ? 1 : 2}`);
+                triggerSystemNotification(p, isFirst);
                 showCallScreen(p, isFirst);
                 displayPrayerTimes();
                 displayTracker();
@@ -497,24 +484,16 @@ function checkReminders() {
             }
         }
     }
-
-    // Check Daily Tracker Nightly Reminder at 22:30 (10:30 PM) in selected timezone
-    if (nowStr === "22:30") {
-        const trackerKey = `tracker_nightly_${cityTime.toDateString()}`;
-        if (!localStorage.getItem(trackerKey)) {
-            localStorage.setItem(trackerKey, 'true');
-            const trackerTitle = currentLang === 'en' ? 'Prayer Tracker Review' : (currentLang === 'ar' ? 'مراجعة متتبع الصلاة' : 'نماز ٹریکر کا جائزہ');
-            const trackerBody = currentLang === 'en' ? 'It is 10:30 PM. Please take a moment to mark your daily Salah tracker.' : (currentLang === 'ar' ? 'الساعة 10:30 مساءً. يرجى تحديث متتبع الصلاة اليومي.' : 'رات کے ساڑھے دس بج چکے ہیں۔ براہ کرم اپنا نماز ٹریکر مارک کریں۔');
-            
-            triggerSystemNotification(trackerTitle, trackerBody, trackerKey);
-            showTrackerCallScreen();
-        }
-    }
 }
 
-function triggerSystemNotification(title, body, tag) {
+function triggerSystemNotification(prayer, isFirst) {
     if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, { body, icon: 'icon-192.png', tag });
+        const title = `${prayer.name}`;
+        const targetTime = isFirst ? firstReminderTime : secondReminderTime;
+        const body = isFirst
+            ? (currentLang === 'en' ? `Reminder for ${prayer.name} at ${targetTime}` : `نماز ${prayer.name} کا یاد دہانی وقت (${targetTime}) ہو گیا ہے۔`)
+            : (currentLang === 'en' ? `Second reminder for ${prayer.name} at ${targetTime}` : `دوسری یاد دہانی وقت (${targetTime})۔`);
+        new Notification(title, { body, icon: 'icon-192.png', tag: `${prayer.key}_${isFirst ? 1 : 2}` });
     }
 }
 
@@ -592,35 +571,15 @@ function showCallScreen(prayer, isFirst) {
     document.getElementById('callPrayerName').textContent = prayer.name;
     document.getElementById('callPrayerTime').textContent = formatTimeLocalized(prayer.time);
 
+    const targetTime = isFirst ? firstReminderTime : secondReminderTime;
     if (currentLang === 'en') {
-        document.getElementById('callMessage').textContent = isFirst ? `Heads up: ${firstReminderMins} mins remaining` : `Final Call: It is time for prayer`;
+        document.getElementById('callMessage').textContent = isFirst ? `Scheduled Reminder at ${targetTime}` : `Final Scheduled Call at ${targetTime}`;
     } else if (currentLang === 'ar') {
-        document.getElementById('callMessage').textContent = isFirst ? `تنبيه: متبقي ${firstReminderMins} دقائق` : `نداء نهائي: حان وقت الصلاة`;
+        document.getElementById('callMessage').textContent = isFirst ? `تذكير مجدول في الساعة ${targetTime}` : `نداء نهائي في الساعة ${targetTime}`;
     } else {
-        document.getElementById('callMessage').textContent = isFirst ? `پہلی یاد دہانی: نماز میں ${convertToUrduNumbers(firstReminderMins)} منٹ باقی ہیں` : `آخری یاد دہانی: نماز کا وقت ہو گیا ہے`;
+        document.getElementById('callMessage').textContent = isFirst ? `مقررہ یاد دہانی وقت: ${targetTime}` : `آخری مقررہ یاد دہانی وقت: ${targetTime}`;
     }
-    window.currentPrayer = { prayer, isFirst, isTracker: false };
-    playRingtone();
-}
-
-function showTrackerCallScreen() {
-    requestWakeLock();
-    document.getElementById('mainScreen').classList.remove('active');
-    document.getElementById('settingsScreen').classList.remove('active');
-    if (document.getElementById('reportScreen')) document.getElementById('reportScreen').classList.remove('active');
-    document.getElementById('callScreen').classList.add('active');
-
-    const trackerNames = { en: 'Prayer Tracker Review', ar: 'مراجعة متتبع الصلاة', ur: 'نماز ٹریکر کا جائزہ' };
-    document.getElementById('callPrayerName').textContent = trackerNames[currentLang] || trackerNames.ur;
-    document.getElementById('callPrayerTime').textContent = '22:30';
-
-    const trackerMsgs = {
-        en: 'Please review and mark your daily Salah tracker.',
-        ar: 'يرجى مراجعة وتحديد متتبع الصلاة اليومي.',
-        ur: 'براہ کرم اپنے آج کے نماز ٹریکر کو مارک کریں۔'
-    };
-    document.getElementById('callMessage').textContent = trackerMsgs[currentLang] || trackerMsgs.ur;
-    window.currentPrayer = { isTracker: true };
+    window.currentPrayer = { prayer, isFirst };
     playRingtone();
 }
 
@@ -651,7 +610,7 @@ async function getDynamicReminderScript(lang, stage, prayerName) {
 
         if (response.ok) {
             const remoteData = await response.json();
-            if (remoteData && remoteData[lang]) {
+            if (remoteData && remoteData[lang] && remoteData[lang][stage]) {
                 scriptPool = remoteData;
                 localStorage.setItem('cachedReminders', JSON.stringify(remoteData));
             }
@@ -664,25 +623,17 @@ async function getDynamicReminderScript(lang, stage, prayerName) {
     }
 
     const langBlock = scriptPool[lang] || defaultVoiceScripts[lang] || defaultVoiceScripts.ur;
-    
-    if (window.currentPrayer && window.currentPrayer.isTracker) {
-        const template = langBlock.tracker || defaultVoiceScripts.ur.tracker;
-        return template.replace(/\{name\}/g, userName);
-    }
-
     const templates = langBlock[stage] || defaultVoiceScripts.ur[stage];
     const template = Array.isArray(templates)
         ? templates[Math.floor(Math.random() * templates.length)]
         : templates;
 
-    const formattedMins = (lang === 'ur' || lang === 'ar')
-        ? convertToUrduNumbers(firstReminderMins)
-        : firstReminderMins;
+    const targetTime = stage === 'first' ? firstReminderTime : secondReminderTime;
 
     return template
         .replace(/\{name\}/g, userName)
         .replace(/\{prayer\}/g, prayerName)
-        .replace(/\{mins\}/g, formattedMins);
+        .replace(/\{time\}/g, targetTime);
 }
 
 function getBestVoice(langCode) {
@@ -696,17 +647,11 @@ async function answerCall() {
     stopRingtone();
     document.getElementById('callScreen').classList.remove('active');
     document.getElementById('activeCallScreen').classList.add('active');
-    
-    const isTrackerCall = window.currentPrayer && window.currentPrayer.isTracker;
-    const prayerName = isTrackerCall ? '' : (window.currentPrayer.prayer ? window.currentPrayer.prayer.name : '');
-    const isFirst = window.currentPrayer ? window.currentPrayer.isFirst : true;
-    
-    document.getElementById('activePrayerName').textContent = isTrackerCall 
-        ? (currentLang === 'en' ? 'Prayer Tracker' : (currentLang === 'ar' ? 'متتبع الصلاة' : 'نماز ٹریکر'))
-        : window.currentPrayer.prayer.name;
+    const { prayer, isFirst } = window.currentPrayer;
+    document.getElementById('activePrayerName').textContent = prayer.name;
 
-    const stage = isTrackerCall ? 'tracker' : (isFirst ? 'first' : 'second');
-    const text = await getDynamicReminderScript(currentLang, stage, prayerName);
+    const stage = isFirst ? 'first' : 'second';
+    const text = await getDynamicReminderScript(currentLang, stage, prayer.name);
 
     document.getElementById('reminderText').innerHTML = `<p>${text}</p>`;
     
@@ -789,8 +734,8 @@ function saveSettings() {
     userName = document.getElementById('userNameInput').value || 'محمد';
     selectedCityKey = document.getElementById('citySelect').value;
     calcMethod = document.getElementById('methodSelect').value;
-    firstReminderMins = parseInt(document.getElementById('firstReminderInput').value, 10) || 5;
-    secondReminderOffset = parseInt(document.getElementById('secondReminderInput').value, 10) || 0;
+    firstReminderTime = document.getElementById('firstReminderInput').value || '05:00';
+    secondReminderTime = document.getElementById('secondReminderInput').value || '12:00';
 
     localStorage.setItem('lang', currentLang);
     localStorage.setItem('soundEnabled', soundEnabled);
@@ -799,8 +744,8 @@ function saveSettings() {
     localStorage.setItem('userName', userName);
     localStorage.setItem('cityKey', selectedCityKey);
     localStorage.setItem('calcMethod', calcMethod);
-    localStorage.setItem('firstReminderMins', firstReminderMins);
-    localStorage.setItem('secondReminderOffset', secondReminderOffset);
+    localStorage.setItem('firstReminderTime', firstReminderTime);
+    localStorage.setItem('secondReminderTime', secondReminderTime);
 
     updateCitySettings(selectedCityKey);
     calculator.setMethod(calcMethod);
@@ -871,8 +816,8 @@ function loadSettingsUI() {
     document.getElementById('userNameInput').value = userName;
     document.getElementById('citySelect').value = selectedCityKey;
     document.getElementById('methodSelect').value = calcMethod;
-    document.getElementById('firstReminderInput').value = firstReminderMins;
-    document.getElementById('secondReminderInput').value = secondReminderOffset;
+    document.getElementById('firstReminderInput').value = firstReminderTime;
+    document.getElementById('secondReminderInput').value = secondReminderTime;
 }
 
 function formatTimeLocalized(time) {
