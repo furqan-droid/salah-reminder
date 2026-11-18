@@ -1,6 +1,6 @@
 /**
- * Salah Reminder v4.0 - Complete Application Logic
- * Includes: Strict 24-Hour Time Format across all languages, dynamic RTL/LTR writing direction, 
+ * Salah Reminder v4.1 - Complete Application Logic
+ * Includes: 12-Hour format across all languages, dynamic RTL/LTR writing direction, 
  * GPS Geolocation, Wake Lock API, and Advanced TTS Voice Matching.
  */
 
@@ -438,10 +438,22 @@ function updateClock() {
     const cityTime = getSelectedCityTime();
     if (cityTime.toDateString() !== currentDateStr) initApp();
 
-    const hrs = String(cityTime.getHours()).padStart(2, '0');
+    let hrs = cityTime.getHours();
     const mins = String(cityTime.getMinutes()).padStart(2, '0');
     const secs = String(cityTime.getSeconds()).padStart(2, '0');
-    const tStr = `${hrs}:${mins}:${secs}`;
+    
+    let period = '';
+    if (currentLang === 'en') {
+        period = hrs >= 12 ? ' PM' : ' AM';
+    } else if (currentLang === 'ar') {
+        period = hrs >= 12 ? ' مساءً' : ' صباحاً';
+    } else {
+        period = hrs >= 12 ? ' بجے' : ' صبح';
+    }
+
+    hrs = hrs % 12 || 12;
+    const hourStr = String(hrs).padStart(2, '0');
+    const tStr = `${hourStr}:${mins}:${secs}${period}`;
 
     document.getElementById('currentTime').textContent = (currentLang === 'ur' || currentLang === 'ar')
         ? convertToUrduNumbers(tStr)
@@ -749,7 +761,6 @@ function applyLanguage() {
     const t = translations[currentLang] || translations.ur;
     document.documentElement.lang = currentLang;
     
-    // Switch document direction automatically (RTL for Urdu/Arabic, LTR for English)
     const isRtl = (currentLang === 'ur' || currentLang === 'ar');
     document.documentElement.dir = isRtl ? "rtl" : "ltr";
 
@@ -811,14 +822,22 @@ function loadSettingsUI() {
 
 function formatTimeLocalized(time) {
     const [h, m] = time.split(':');
-    const hourStr = String(parseInt(h, 10)).padStart(2, '0');
+    let hour = parseInt(h, 10);
     const minStr = String(parseInt(m, 10)).padStart(2, '0');
-    const formatted24 = `${hourStr}:${minStr}`;
 
-    if (currentLang === 'ur' || currentLang === 'ar') {
-        return convertToUrduNumbers(formatted24);
+    if (currentLang === 'en') {
+        const period = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12 || 12;
+        return `${hour}:${minStr} ${period}`;
+    } else if (currentLang === 'ar') {
+        const period = hour >= 12 ? 'مساءً' : 'صباحاً';
+        hour = hour % 12 || 12;
+        return `${convertToUrduNumbers(hour)}:${convertToUrduNumbers(minStr)} ${period}`;
+    } else {
+        const period = hour >= 12 ? 'بجے' : 'صبح';
+        hour = hour % 12 || 12;
+        return `${convertToUrduNumbers(hour)}:${convertToUrduNumbers(minStr)} ${period}`;
     }
-    return formatted24;
 }
 
 function convertToUrduNumbers(num) {
