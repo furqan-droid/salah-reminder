@@ -33,6 +33,8 @@ body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #ff
 .setting-input[type="number"] { width: 80px; text-align: center; }
 .setting-select option { background: #1a472a; color: #fff; }
 .setting-range { width: 45%; }
+#saveSettingsBtn { width: 100%; background: #4CAF50; padding: 14px; font-size: 1.1em; font-weight: bold; border-radius: 12px; border: none; color: #fff; cursor: pointer; }
+#saveSettingsBtn:hover { background: #45a049; }
 .call-screen, .active-call-screen { background: #1a1a2e; text-align: center; padding: 40px 20px; }
 .caller-icon { font-size: 5em; margin-bottom: 15px; }
 .prayer-info { background: rgba(255,255,255,0.1); border-radius: 18px; padding: 25px; margin: 25px 0; }
@@ -44,6 +46,3 @@ body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #ff
 .btn-decline, .btn-end-call { background: #f44336; }
 .reminder-text { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin: 25px 0; line-height: 1.7; font-size: 1.15em; }
 .audio-badge { background: rgba(76, 175, 80, 0.25); padding: 4px 10px; border-radius: 12px; display: inline-block; }
-```[cite: 9]
-
-With these saved along with `index.html`, `app.js`, `sw.js`, and `reminders.json`, your entire codebase is complete, optimized, and fully synchronized.
