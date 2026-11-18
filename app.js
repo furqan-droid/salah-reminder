@@ -1,8 +1,8 @@
 /**
- * Salah Reminder v3.1 - Complete Application Logic
- * Includes: Multi-language (Urdu/English/Arabic) with Urdu digit conversion,
- * Custom Reminder Offsets, AudioContext Ringtones, Volume Control,
- * Web Push Notifications, Custom User Name, City Presets & Calculation Methods.
+ * Salah Reminder v3.2 - Complete Application Logic
+ * Includes: Multi-language (Urdu/English/Arabic), Urdu digit conversion,
+ * Custom Reminder Offsets, AudioContext Ringtones, Web Push Notifications,
+ * Interactive Prayer Tracker, and Weekly Summary Report.
  */
 
 const translations = {
@@ -11,7 +11,9 @@ const translations = {
         subtitle: "ذاتی نماز کا وقت یاد دہانی",
         nextPrayer: "اگلی نماز",
         todayPrayers: "آج کے اوقات",
+        trackerTitle: "📊 نماز ٹریکر",
         testBtn: "🔔 یاد دہانی ٹیسٹ کریں",
+        reportBtn: "📈 رپورٹ دیکھیں",
         settingsBtn: "⚙️ ترتیبات",
         backBtn: "← واپس",
         callHeader: "نماز کی یاد دہانی",
@@ -43,7 +45,9 @@ const translations = {
         subtitle: "Personal Prayer Time Reminder",
         nextPrayer: "Next Prayer",
         todayPrayers: "Today's Times",
+        trackerTitle: "📊 Prayer Tracker",
         testBtn: "🔔 Test Reminder",
+        reportBtn: "📈 View Report",
         settingsBtn: "⚙️ Settings",
         backBtn: "← Back",
         callHeader: "Prayer Reminder",
@@ -75,7 +79,9 @@ const translations = {
         subtitle: "تذكير شخصي بأوقات الصلاة",
         nextPrayer: "الصلاة القادمة",
         todayPrayers: "أوقات اليوم",
+        trackerTitle: "📊 متتبع الصلاة",
         testBtn: "🔔 اختبار التذكير",
+        reportBtn: "📈 عرض التقرير",
         settingsBtn: "⚙️ الإعدادات",
         backBtn: "← رجوع",
         callHeader: "تذكير الصلاة",
@@ -173,11 +179,13 @@ function initApp() {
     };
 
     displayPrayerTimes();
+    displayTracker();
     updateNextPrayer();
 }
 
 function displayPrayerTimes() {
     const list = document.getElementById('prayersList');
+    if (!list) return;
     list.innerHTML = '';
     const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
 
@@ -190,6 +198,100 @@ function displayPrayerTimes() {
         div.className = 'prayer-item' + (passed ? ' passed' : '');
         div.innerHTML = `<span class="prayer-name-small">${p.name}</span><span class="prayer-time-small">${formatTimeLocalized(p.time)}</span>`;
         list.appendChild(div);
+    }
+}
+
+function displayTracker() {
+    const trackerList = document.getElementById('trackerList');
+    if (!trackerList) return;
+    trackerList.innerHTML = '';
+    
+    const todayKey = new Date().toDateString();
+    const btnTextDone = currentLang === 'en' ? '✓ Completed' : (currentLang === 'ar' ? '✓ تم' : '✓ ادا کر لی');
+    const btnTextPending = currentLang === 'en' ? '○ Pending' : (currentLang === 'ar' ? '○ باقي' : '○ باقی ہے');
+
+    for (let k in todayPrayers) {
+        const p = todayPrayers[k];
+        const storageKey = `track_${todayKey}_${k}`;
+        const isCompleted = localStorage.getItem(storageKey) === 'true';
+
+        const div = document.createElement('div');
+        div.className = 'prayer-item';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+
+        div.innerHTML = `
+            <span>${p.name}</span>
+            <button onclick="togglePrayerStatus('${k}')" style="padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: ${isCompleted ? '#4CAF50' : 'rgba(255,255,255,0.2)'}; color: #fff;">
+                ${isCompleted ? btnTextDone : btnTextPending}
+            </button>
+        `;
+        trackerList.appendChild(div);
+    }
+}
+
+function togglePrayerStatus(prayerKey) {
+    const todayKey = new Date().toDateString();
+    const storageKey = `track_${todayKey}_${prayerKey}`;
+    const currentStatus = localStorage.getItem(storageKey) === 'true';
+    
+    localStorage.setItem(storageKey, (!currentStatus).toString());
+    displayTracker();
+}
+
+function showReportScreen() {
+    document.getElementById('mainScreen').classList.remove('active');
+    document.getElementById('reportScreen').classList.add('active');
+    generateWeeklyReport();
+}
+
+function hideReportScreen() {
+    document.getElementById('reportScreen').classList.remove('active');
+    document.getElementById('mainScreen').classList.add('active');
+}
+
+function generateWeeklyReport() {
+    const summaryEl = document.getElementById('weeklyReportSummary');
+    if (!summaryEl) return;
+
+    let totalCompleted = 0;
+    let totalPossible = 0;
+    const keys = ['fajr', 'zuhr', 'asr', 'maghrib', 'isha'];
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toDateString();
+
+        keys.forEach(k => {
+            totalPossible++;
+            if (localStorage.getItem(`track_${dateStr}_${k}`) === 'true') {
+                totalCompleted++;
+            }
+        });
+    }
+
+    const percentage = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+    
+    if (currentLang === 'en') {
+        summaryEl.innerHTML = `
+            <p>🎯 <strong>Completed Prayers (Last 7 Days):</strong> ${totalCompleted} / ${totalPossible}</p>
+            <p>📊 <strong>Success Rate:</strong> ${percentage}%</p>
+            <p style="margin-top: 10px; opacity: 0.85; font-size: 0.95em;">Consistency in prayer is the key to success. May Allah accept your worship.</p>
+        `;
+    } else if (currentLang === 'ar') {
+        summaryEl.innerHTML = `
+            <p>🎯 <strong>الصلوات المؤداة (آخر 7 أيام):</strong> ${totalCompleted} / ${totalPossible}</p>
+            <p>📊 <strong>نسبة النجاح:</strong> ${percentage}%</p>
+            <p style="margin-top: 10px; opacity: 0.85; font-size: 0.95em;">المحافظة على الصلاة مفتاح الفلاح. تقبل الله طاعتكم.</p>
+        `;
+    } else {
+        summaryEl.innerHTML = `
+            <p>🎯 <strong>کل ادا شدہ نمازیں (پچھلے 7 دن):</strong> ${convertToUrduNumbers(totalCompleted)} / ${convertToUrduNumbers(totalPossible)}</p>
+            <p>📊 <strong>کامیابی کی شرح:</strong> ${convertToUrduNumbers(percentage)}%</p>
+            <p style="margin-top: 10px; opacity: 0.85; font-size: 0.95em;">نماز کی پابندی مومن کی سب سے بڑی کامیابی ہے۔ اللہ آپ کی عبادت کو قبول فرمائے۔</p>
+        `;
     }
 }
 
@@ -277,6 +379,7 @@ function checkReminders() {
                 triggerSystemNotification(p, isFirst);
                 showCallScreen(p, isFirst);
                 displayPrayerTimes();
+                displayTracker();
                 updateNextPrayer();
             }
         }
@@ -361,6 +464,7 @@ function stopRingtone() {
 function showCallScreen(prayer, isFirst) {
     document.getElementById('mainScreen').classList.remove('active');
     document.getElementById('settingsScreen').classList.remove('active');
+    if(document.getElementById('reportScreen')) document.getElementById('reportScreen').classList.remove('active');
     document.getElementById('callScreen').classList.add('active');
     document.getElementById('callPrayerName').textContent = prayer.name;
     document.getElementById('callPrayerTime').textContent = formatTimeLocalized(prayer.time);
@@ -433,7 +537,9 @@ function applyLanguage() {
     document.getElementById('headerSubtitle').textContent = t.subtitle;
     document.getElementById('nextPrayerTitle').textContent = t.nextPrayer;
     document.getElementById('todayPrayersTitle').textContent = t.todayPrayers;
+    if(document.getElementById('trackerTitle')) document.getElementById('trackerTitle').textContent = t.trackerTitle;
     document.getElementById('testBtn').textContent = t.testBtn;
+    if(document.getElementById('reportBtn')) document.getElementById('reportBtn').textContent = t.reportBtn;
     document.getElementById('settingsBtn').textContent = t.settingsBtn;
     document.getElementById('backBtn').textContent = t.backBtn;
     document.getElementById('settingsTitle').textContent = t.settingsBtn;
