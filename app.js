@@ -1,7 +1,7 @@
 /**
- * Salah Reminder v3.8 - Complete Application Logic
- * Includes: Wake Lock API, GPS Geolocation Auto-Detection, Advanced TTS Voice Matching, 
- * LTR Locked Layout, Time-based Reminders, and Timezone-aware Clock.
+ * Salah Reminder v3.9 - Complete Application Logic
+ * Includes: Dynamic RTL/LTR switching for Urdu/Arabic vs English, GPS Geolocation, Wake Lock, 
+ * Advanced TTS voice matching, and precise time-based reminders.
  */
 
 const translations = {
@@ -160,7 +160,7 @@ let currentLang = localStorage.getItem('lang') || 'ur';
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 let volume = parseFloat(localStorage.getItem('volume') || '0.8');
 let ringtoneType = localStorage.getItem('ringtone') || 'chime';
-let userName = localStorage.getItem('userName') || 'Muhammad';
+let userName = localStorage.getItem('userName') || 'محمد';
 let selectedCityKey = localStorage.getItem('cityKey') || 'karachi';
 let customLat = parseFloat(localStorage.getItem('customLat') || '0');
 let customLng = parseFloat(localStorage.getItem('customLng') || '0');
@@ -713,7 +713,7 @@ function saveSettings() {
     soundEnabled = document.getElementById('soundEnabled').checked;
     volume = parseInt(document.getElementById('volumeControl').value, 10) / 100;
     ringtoneType = document.getElementById('ringtoneSelect').value;
-    userName = document.getElementById('userNameInput').value || 'Muhammad';
+    userName = document.getElementById('userNameInput').value || 'محمد';
     selectedCityKey = document.getElementById('citySelect').value;
     calcMethod = document.getElementById('methodSelect').value;
     firstReminderTime = document.getElementById('firstReminderInput').value || '05:00';
@@ -742,7 +742,10 @@ function saveSettings() {
 function applyLanguage() {
     const t = translations[currentLang] || translations.ur;
     document.documentElement.lang = currentLang;
-    document.documentElement.dir = "ltr";
+    
+    // Automatically switch document writing direction based on language selection
+    const isRtl = (currentLang === 'ur' || currentLang === 'ar');
+    document.documentElement.dir = isRtl ? "rtl" : "ltr";
 
     document.getElementById('headerTitle').textContent = t.title;
     document.getElementById('headerSubtitle').textContent = t.subtitle;
@@ -797,7 +800,7 @@ function loadSettingsUI() {
     document.getElementById('citySelect').value = selectedCityKey;
     document.getElementById('methodSelect').value = calcMethod;
     document.getElementById('firstReminderInput').value = firstReminderTime;
-    document.getElementById('secondReminderInput').value = secondReminderTime;
+    document.getElementById('secondReminderInput').value = secondNastaliq || secondReminderTime;
 }
 
 function formatTimeLocalized(time) {
