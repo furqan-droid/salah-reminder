@@ -2,190 +2,206 @@
 <html lang="ur" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🕌 Salah Reminder</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a472a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>نماز یاد دہانی - Salah Reminder</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1b4d3e">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="style.css?v=3.3">
 </head>
 <body>
-
-    <!-- Main Dashboard Screen -->
+    <!-- Main Screen -->
     <div id="mainScreen" class="screen active">
-        <header class="app-header">
+        <div class="header">
             <h1 id="headerTitle">🕌 نماز یاد دہانی</h1>
-            <p id="headerSubtitle">ذاتی نماز کا وقت یاد دہانی</p>
-        </header>
-
-        <!-- Language Switcher Bar -->
-        <div class="lang-bar">
-            <label for="langSelect">🌐 اللغة / Language / زبان:</label>
-            <select id="langSelect" onchange="updateLanguage(this.value)">
-                <option value="ur">اردو</option>
-                <option value="en">English</option>
-                <option value="ar">العربية</option>
-            </select>
+            <p class="subtitle" id="headerSubtitle">ذاتی نماز کا وقت یاد دہانی</p>
         </div>
 
-        <!-- Live Clock & Date -->
-        <div class="clock-card">
-            <div id="currentTime">00:00:00</div>
-            <div id="currentDate">Wednesday, Nov 18, 2026</div>
+        <div class="status-card">
+            <div class="current-time" id="currentTime">--:--:--</div>
+            <div class="current-date" id="currentDate">--</div>
         </div>
 
-        <!-- Next Prayer Card -->
-        <div class="card next-prayer-card">
+        <div class="next-prayer-card">
             <h3 id="nextPrayerTitle">اگلی نماز</h3>
-            <div id="nextPrayerName" class="prayer-big-name">--</div>
-            <div id="nextPrayerTime" class="prayer-big-time">--:--</div>
-            <div id="timeRemaining">-- min remaining</div>
+            <div class="prayer-name" id="nextPrayerName">--</div>
+            <div class="prayer-time" id="nextPrayerTime">--:--</div>
+            <div class="time-remaining" id="timeRemaining">--</div>
         </div>
 
-        <!-- Today's Times List -->
-        <div class="card">
+        <div class="today-prayers">
             <h3 id="todayPrayersTitle">آج کے اوقات</h3>
-            <div id="prayersList" class="prayers-list"></div>
+            <div id="prayersList"></div>
         </div>
 
-        <!-- Prayer Tracker Section -->
-        <div class="card">
+        <div class="today-prayers">
             <h3 id="trackerTitle">📊 نماز ٹریکر</h3>
-            <div id="trackerList" class="tracker-list"></div>
+            <div id="trackerList"></div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button id="testBtn" class="btn primary-btn" onclick="testReminder()">🔔 یاد دہانی ٹیسٹ کریں</button>
-            <button id="reportBtn" class="btn secondary-btn" onclick="showReportScreen()">📈 رپورٹ دیکھیں</button>
-            <button id="settingsBtn" class="btn secondary-btn" onclick="showSettings()">⚙️ ترتیبات</button>
-        </div>
-    </div>
-
-    <!-- Settings Screen -->
-    <div id="settingsScreen" class="screen">
-        <button id="backBtn" class="btn back-btn" onclick="hideSettings()">← واپس</button>
-        <h2 id="settingsTitle">⚙️ ترتیبات</h2>
-
-        <div class="settings-card">
-            <h3 id="lblNotifGroup">🔔 نوٹیفکیشن</h3>
-            <label id="lblEnableNotif">براؤزر نوٹیفکیشن کی اجازت:</label>
-            <button id="btnNotifPerm" class="btn permit-btn" onclick="requestNotificationPermission()">اجازت دیں</button>
-            <div id="notificationStatus" class="status-indicator inactive">❌ نوٹیفکیشن: غیر فعال</div>
-
-            <label id="lblFirstRem" for="firstReminderInput">پہلی یاد دہانی (منٹ پہلے):</label>
-            <input type="number" id="firstReminderInput" onchange="updateFirstReminder()" min="0" max="60">
-
-            <label id="lblSecondRem" for="secondReminderInput">دوسری یاد دہانی (وقت پر آفسیٹ منٹ):</label>
-            <input type="number" id="secondReminderInput" onchange="updateSecondReminder()" min="0" max="60">
+        <div class="controls">
+            <button onclick="testReminder()" class="btn-test" id="testBtn">🔔 یاد دہانی ٹیسٹ کریں</button>
+            <button onclick="showReportScreen()" class="btn-secondary" id="reportBtn">📈 رپورٹ دیکھیں</button>
+            <button onclick="showSettings()" class="btn-secondary" id="settingsBtn">⚙️ ترتیبات</button>
         </div>
 
-        <div class="settings-card">
-            <h3 id="lblSoundGroup">🎵 آواز اور رنگ ٹون</h3>
-            <label class="checkbox-label">
-                <input type="checkbox" id="soundEnabled" onchange="updateSoundSetting()">
-                <span id="lblSoundActive">آواز فعال کریں</span>
-            </label>
-
-            <label id="lblVolumeText" for="volumeControl">آواز کی سطح:</label>
-            <div class="volume-slider-group">
-                <input type="range" id="volumeControl" min="0" max="100" oninput="updateVolume()">
-                <span id="volumeValue">80%</span>
-            </div>
-
-            <label id="lblRingtoneText" for="ringtoneSelect">رنگ ٹون:</label>
-            <select id="ringtoneSelect" onchange="updateRingtone()">
-                <option value="chime" id="optChime">نرم گھنٹی (Chime)</option>
-                <option value="beep" id="optBeep">ڈیجیٹل بیپ (Beep)</option>
-                <option value="melody" id="optMelody">ساز آور گھنٹی (Melody)</option>
-            </select>
-        </div>
-
-        <div class="settings-card">
-            <h3 id="lblProfileGroup">👤 ذاتی پروفائل</h3>
-            <label id="lblUserName" for="userNameInput">یاد دہانی کا نام:</label>
-            <input type="text" id="userNameInput" onchange="updateUserName()">
-        </div>
-
-        <div class="settings-card">
-            <h3 id="lblLocationGroup">🌍 مقام اور حساب کتاب</h3>
-            <label id="lblCityText" for="citySelect">شہر / مقام:</label>
-            <select id="citySelect" onchange="updateCity()">
-                <option value="karachi">Karachi</option>
-                <option value="lahore">Lahore</option>
-                <option value="islamabad">Islamabad</option>
-                <option value="makkah">Makkah</option>
-                <option value="madinah">Madinah</option>
-                <option value="dubai">Dubai</option>
-                <option value="london">London</option>
-                <option value="newyork">New York</option>
-            </select>
-
-            <label id="lblMethodText" for="methodSelect">حساب کتاب کا طریقہ:</label>
-            <select id="methodSelect" onchange="updateMethod()">
-                <option value="Karachi">University of Islamic Sciences, Karachi</option>
-                <option value="MWL">Muslim World League</option>
-                <option value="ISNA">Islamic Society of North America</option>
-                <option value="Egypt">Egyptian General Authority of Survey</option>
-                <option value="Makkah">Umm Al-Qura University, Makkah</option>
-            </select>
+        <div class="status-info">
+            <div id="notificationStatus" class="status-indicator"></div>
         </div>
     </div>
 
     <!-- Weekly Report Screen -->
-    <div id="reportScreen" class="screen">
-        <button class="btn back-btn" onclick="hideReportScreen()">← واپس</button>
-        <h2>📈 ہفتہ وار رپورٹ</h2>
-        <div class="card" id="weeklyReportSummary">
-            <!-- Dynamically populated report content -->
+    <div id="reportScreen" class="screen report-screen">
+        <div class="settings-header">
+            <button onclick="hideReportScreen()" class="btn-back">← واپس</button>
+            <h2>📈 نماز کی ہفتہ وار رپورٹ</h2>
         </div>
-    </div>
-
-    <!-- Incoming Call Screen Simulator -->
-    <div id="callScreen" class="call-screen">
-        <div class="call-glow"></div>
-        <div class="call-header-info">
-            <h3 id="callHeaderTitle">نماز کی یاد دہانی</h3>
-            <p id="callTypeLabel">آواز کال</p>
-        </div>
-        <div class="call-caller-box">
-            <h2 id="callPrayerName">ظہر</h2>
-            <p id="callPrayerTime">13:00</p>
-            <p id="callMessage" class="call-message-text">نماز کا وقت ہو رہا ہے</p>
-        </div>
-        <div class="call-actions">
-            <button class="call-btn accept-btn" onclick="answerCall()">
-                <span class="call-icon">📞</span>
-                <span id="answerText">جواب دیں</span>
-            </button>
-            <button class="call-btn decline-btn" onclick="dismissCall()">
-                <span class="call-icon">❌</span>
-                <span id="laterText">بعد میں</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Active Call / Speaker Screen -->
-    <div id="activeCallScreen" class="call-screen active-call-bg">
-        <div class="call-header-info">
-            <h3 id="activeCallStatusLabel">جاری ہے...</h3>
-            <h2 id="activePrayerName">ظہر</h2>
-        </div>
-        <div class="active-call-body">
-            <div class="speaker-avatar">🕌</div>
-            <div id="reminderText" class="reminder-spoken-text">
-                <p>السلام علیکم۔ نماز کا وقت ہو چکا ہے۔</p>
+        <div class="settings-content" style="margin-top: 20px;">
+            <div class="setting-group" style="text-align: center; padding: 25px;">
+                <h3>پچھلے 7 دنوں کا خلاصہ</h3>
+                <div id="weeklyReportSummary" style="margin-top: 15px; font-size: 1.1em; line-height: 1.8;">
+                    <!-- Report details injected dynamically -->
+                </div>
             </div>
         </div>
-        <div class="call-actions">
-            <button class="call-btn decline-btn full-width-end" onclick="endCall()">
-                <span class="call-icon">📴</span>
-                <span id="endCallText">کال ختم کریں</span>
-            </button>
+    </div>
+
+    <!-- Incoming Call Screen -->
+    <div id="callScreen" class="screen call-screen">
+        <div class="call-background">
+            <div class="call-header">
+                <div class="caller-icon">🕌</div>
+                <div class="caller-name" id="callHeaderTitle">نماز کی یاد دہانی</div>
+                <div class="call-type" id="callTypeLabel">آواز کال</div>
+            </div>
+            <div class="prayer-info">
+                <div class="prayer-name-large" id="callPrayerName">--</div>
+                <div class="prayer-time-large" id="callPrayerTime">--:--</div>
+                <div class="reminder-message" id="callMessage">--</div>
+            </div>
+            <div class="call-controls">
+                <button onclick="answerCall()" class="btn-answer">📞 <span id="answerText">جواب دیں</span></button>
+                <button onclick="dismissCall()" class="btn-decline">✖️ <span id="laterText">بعد میں</span></button>
+            </div>
         </div>
     </div>
 
-    <!-- Calculation Engine -->
-    <script src="prayer-times.js"></script>
-    <script src="app.js"></script>
+    <!-- Active Call Screen -->
+    <div id="activeCallScreen" class="screen active-call-screen">
+        <div class="active-call-background">
+            <div class="active-call-header">
+                <div class="caller-icon-small">🕌</div>
+                <div class="call-status" id="activeCallStatusLabel">جاری ہے...</div>
+                <!-- Headset Mode Badge -->
+                <div id="audioOutputBadge" class="audio-badge" style="display: none; font-size: 0.85rem; color: #a5d6a7; margin-top: 4px;">🎧 Headset Mode</div>
+            </div>
+            <div class="active-prayer-info">
+                <div class="active-prayer-name" id="activePrayerName">--</div>
+            </div>
+            <div class="reminder-text" id="reminderText"></div>
+            <button onclick="endCall()" class="btn-end-call">📞 <span id="endCallText">کال ختم کریں</span></button>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settingsScreen" class="screen settings-screen">
+        <div class="settings-header">
+            <button onclick="hideSettings()" class="btn-back" id="backBtn">← واپس</button>
+            <h2 id="settingsTitle">⚙️ ترتیبات</h2>
+        </div>
+        <div class="settings-content">
+            <div class="setting-group">
+                <h3>🌐 Language / زبان / اللغة</h3>
+                <div class="setting-item">
+                    <label>Language:</label>
+                    <select id="langSelect" onchange="updateLanguage(this.value)" class="setting-select">
+                        <option value="ur">اردو (Urdu)</option>
+                        <option value="en">English</option>
+                        <option value="ar">العربية (Arabic)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3 id="lblNotifGroup">🔔 نوٹیفکیشن</h3>
+                <div class="setting-item">
+                    <label id="lblEnableNotif">براؤزر نوٹیفکیشن کی اجازت:</label>
+                    <button onclick="requestNotificationPermission()" class="btn-permission" id="btnNotifPerm">اجازت دیں</button>
+                </div>
+                <div class="setting-item">
+                    <label id="lblFirstRem">پہلی یاد دہانی (منٹ پہلے):</label>
+                    <input type="number" id="firstReminderInput" min="0" max="60" value="5" onchange="updateFirstReminder()" class="setting-input">
+                </div>
+                <div class="setting-item">
+                    <label id="lblSecondRem">دوسری یاد دہانی (منٹ):</label>
+                    <input type="number" id="secondReminderInput" min="-30" max="60" value="0" onchange="updateSecondReminder()" class="setting-input">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3 id="lblSoundGroup">🎵 آواز اور رنگ ٹون</h3>
+                <div class="setting-item">
+                    <label><input type="checkbox" id="soundEnabled" checked onchange="updateSoundSetting()"> <span id="lblSoundActive">آواز فعال کریں</span></label>
+                </div>
+                <div class="setting-item">
+                    <label><span id="lblVolumeText">آواز کی سطح:</span> <span id="volumeValue">80%</span></label>
+                    <input type="range" id="volumeControl" min="0" max="100" value="80" onchange="updateVolume()" class="setting-range">
+                </div>
+                <div class="setting-item">
+                    <label id="lblRingtoneText">رنگ ٹون:</label>
+                    <select id="ringtoneSelect" onchange="updateRingtone()" class="setting-select">
+                        <option value="chime" id="optChime">نرم گھنٹی (Chime)</option>
+                        <option value="beep" id="optBeep">ڈیجیٹل بیپ (Beep)</option>
+                        <option value="melody" id="optMelody">ساز آور گھنٹی (Melody)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3 id="lblProfileGroup">👤 ذاتی پروفائل</h3>
+                <div class="setting-item">
+                    <label id="lblUserName">یاد دہانی کا نام:</label>
+                    <input type="text" id="userNameInput" value="محمد" onchange="updateUserName()" class="setting-input">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3 id="lblLocationGroup">🌍 مقام اور حساب کتاب</h3>
+                <div class="setting-item">
+                    <label id="lblCityText">شہر / مقام:</label>
+                    <select id="citySelect" onchange="updateCity()" class="setting-select">
+                        <option value="karachi">Karachi, Pakistan</option>
+                        <option value="lahore">Lahore, Pakistan</option>
+                        <option value="islamabad">Islamabad, Pakistan</option>
+                        <option value="makkah">Makkah, Saudi Arabia</option>
+                        <option value="madinah">Madinah, Saudi Arabia</option>
+                        <option value="dubai">Dubai, UAE</option>
+                        <option value="london">London, UK</option>
+                        <option value="newyork">New York, USA</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label id="lblMethodText">حساب کتاب کا طریقہ:</label>
+                    <select id="methodSelect" onchange="updateMethod()" class="setting-select">
+                        <option value="Karachi">University of Islamic Sciences, Karachi</option>
+                        <option value="MWL">Muslim World League (MWL)</option>
+                        <option value="ISNA">Islamic Society of North America (ISNA)</option>
+                        <option value="Makkah">Umm al-Qura University, Makkah</option>
+                        <option value="Tehran">Institute of Geophysics, Tehran</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="prayer-times.js?v=3.3"></script>
+    <script src="app.js?v=3.3"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
 </body>
 </html>
