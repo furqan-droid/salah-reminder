@@ -1,9 +1,7 @@
 /**
- * Salah Reminder v3.3 - Complete Application Logic
- * Includes: Dynamic Internet-Synced Voice Scripts (with offline fallback),
- * Headset/Earphone Mode Detection, Multi-language (Urdu/English/Arabic),
- * Urdu digit conversion, Custom Reminder Offsets, AudioContext Ringtones,
- * Web Push Notifications, Interactive Prayer Tracker, and Weekly Summary Report.
+ * Salah Reminder v3.4 - Complete Application Logic
+ * Includes: Dynamic Internet-Synced Voice Scripts, Headset Mode Detection,
+ * Multi-language Support, Explicit Save Settings Action, and Interactive Tracker.
  */
 
 const translations = {
@@ -39,7 +37,9 @@ const translations = {
         userNameLabel: "یاد دہانی کا نام:",
         secLocation: "🌍 مقام اور حساب کتاب",
         locationLabel: "شہر / مقام:",
-        methodLabel: "حساب کتاب کا طریقہ:"
+        methodLabel: "حساب کتاب کا طریقہ:",
+        saveBtn: "💾 ترتیبات محفوظ کریں",
+        savedAlert: "✅ ترتیبات کامیابی سے محفوظ ہو گئیں!"
     },
     en: {
         title: "🕌 Salah Reminder",
@@ -73,7 +73,9 @@ const translations = {
         userNameLabel: "Reminder Name:",
         secLocation: "🌍 Location & Calculation",
         locationLabel: "City / Location:",
-        methodLabel: "Calculation Method:"
+        methodLabel: "Calculation Method:",
+        saveBtn: "💾 Save Settings",
+        savedAlert: "✅ Settings saved successfully!"
     },
     ar: {
         title: "🕌 تذكرة الصلاة",
@@ -107,11 +109,12 @@ const translations = {
         userNameLabel: "اسم الشخص للتذكير:",
         secLocation: "🌍 الموقع والحساب",
         locationLabel: "المدينة / الموقع:",
-        methodLabel: "طريقة الحساب:"
+        methodLabel: "طريقة الحساب:",
+        saveBtn: "💾 حفظ الإعدادات",
+        savedAlert: "✅ تم حفظ الإعدادات بنجاح!"
     }
 };
 
-// Built-in offline fallback scripts
 const defaultVoiceScripts = {
     en: {
         first: ["Attention {name}. {prayer} prayer is coming up in {mins} minutes. Please finish your tasks and get ready for Wudu."],
@@ -143,7 +146,7 @@ let todayPrayers = {};
 let nextPrayer = null;
 let currentRingtone = null;
 
-let currentLang = localStorage.getItem('lang') || document.getElementById('langSelect')?.value || 'ur';
+let currentLang = localStorage.getItem('lang') || 'ur';
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 let volume = parseFloat(localStorage.getItem('volume') || '0.8');
 let ringtoneType = localStorage.getItem('ringtone') || 'chime';
@@ -155,12 +158,6 @@ let secondReminderOffset = parseInt(localStorage.getItem('secondReminderOffset')
 let currentDateStr = new Date().toDateString();
 
 document.addEventListener('DOMContentLoaded', () => {
-    const langSelect = document.getElementById('langSelect');
-    if (langSelect) {
-        currentLang = localStorage.getItem('lang') || langSelect.value;
-        langSelect.value = currentLang;
-    }
-
     updateCitySettings(selectedCityKey);
     calculator.setMethod(calcMethod);
     initApp();
@@ -619,6 +616,37 @@ function testReminder() {
 function showSettings() { document.getElementById('mainScreen').classList.remove('active'); document.getElementById('settingsScreen').classList.add('active'); }
 function hideSettings() { document.getElementById('settingsScreen').classList.remove('active'); document.getElementById('mainScreen').classList.add('active'); }
 
+function saveSettings() {
+    currentLang = document.getElementById('langSelect').value;
+    soundEnabled = document.getElementById('soundEnabled').checked;
+    volume = parseInt(document.getElementById('volumeControl').value, 10) / 100;
+    ringtoneType = document.getElementById('ringtoneSelect').value;
+    userName = document.getElementById('userNameInput').value || 'محمد';
+    selectedCityKey = document.getElementById('citySelect').value;
+    calcMethod = document.getElementById('methodSelect').value;
+    firstReminderMins = parseInt(document.getElementById('firstReminderInput').value, 10) || 0;
+    secondReminderOffset = parseInt(document.getElementById('secondReminderInput').value, 10) || 0;
+
+    localStorage.setItem('lang', currentLang);
+    localStorage.setItem('soundEnabled', soundEnabled);
+    localStorage.setItem('volume', volume);
+    localStorage.setItem('ringtone', ringtoneType);
+    localStorage.setItem('userName', userName);
+    localStorage.setItem('cityKey', selectedCityKey);
+    localStorage.setItem('calcMethod', calcMethod);
+    localStorage.setItem('firstReminderMins', firstReminderMins);
+    localStorage.setItem('secondReminderOffset', secondReminderOffset);
+
+    updateCitySettings(selectedCityKey);
+    calculator.setMethod(calcMethod);
+    applyLanguage();
+    initApp();
+
+    const t = translations[currentLang] || translations.ur;
+    alert(t.savedAlert);
+    hideSettings();
+}
+
 function applyLanguage() {
     const t = translations[currentLang] || translations.ur;
     document.documentElement.lang = currentLang;
@@ -658,6 +686,7 @@ function applyLanguage() {
     document.getElementById('lblLocationGroup').textContent = t.secLocation;
     document.getElementById('lblCityText').textContent = t.locationLabel;
     document.getElementById('lblMethodText').textContent = t.methodLabel;
+    document.getElementById('saveSettingsBtn').textContent = t.saveBtn;
 }
 
 function loadSettingsUI() {
@@ -674,22 +703,6 @@ function loadSettingsUI() {
     document.getElementById('firstReminderInput').value = firstReminderMins;
     document.getElementById('secondReminderInput').value = secondReminderOffset;
 }
-
-function updateLanguage(v) { 
-    localStorage.setItem('lang', v); 
-    currentLang = v; 
-    applyLanguage(); 
-    initApp(); 
-    updateNotificationStatus(); 
-}
-function updateSoundSetting() { soundEnabled = document.getElementById('soundEnabled').checked; localStorage.setItem('soundEnabled', soundEnabled); }
-function updateVolume() { const v = document.getElementById('volumeControl').value; volume = v / 100; document.getElementById('volumeValue').textContent = `${v}%`; localStorage.setItem('volume', volume); }
-function updateRingtone() { ringtoneType = document.getElementById('ringtoneSelect').value; localStorage.setItem('ringtone', ringtoneType); }
-function updateUserName() { userName = document.getElementById('userNameInput').value || 'محمد'; localStorage.setItem('userName', userName); }
-function updateCity() { selectedCityKey = document.getElementById('citySelect').value; localStorage.setItem('cityKey', selectedCityKey); updateCitySettings(selectedCityKey); initApp(); }
-function updateMethod() { calcMethod = document.getElementById('methodSelect').value; localStorage.setItem('calcMethod', calcMethod); calculator.setMethod(calcMethod); initApp(); }
-function updateFirstReminder() { firstReminderMins = parseInt(document.getElementById('firstReminderInput').value, 10) || 0; localStorage.setItem('firstReminderMins', firstReminderMins); }
-function updateSecondReminder() { secondReminderOffset = parseInt(document.getElementById('secondReminderInput').value, 10) || 0; localStorage.setItem('secondReminderOffset', secondReminderOffset); }
 
 function formatTimeLocalized(time) {
     const [h, m] = time.split(':');
@@ -713,13 +726,3 @@ function convertToUrduNumbers(num) {
     const d = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     return String(num).split('').map(c => (c >= '0' && c <= '9') ? d[parseInt(c, 10)] : c).join('');
 }
-
-setInterval(() => {
-    const todayStr = new Date().toDateString();
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('notif_') && !key.includes(todayStr)) {
-            localStorage.removeItem(key);
-        }
-    }
-}, 3600000);
