@@ -1,6 +1,6 @@
 /**
- * Salah Reminder v3.5 - Complete Application Logic
- * Includes: Timezone-adjusted Clock, Language Selection fix, Save Settings, and Headset Mode.
+ * Salah Reminder v3.6 - Complete Application Logic
+ * Includes: Precise Time-based Reminders, Timezone-adjusted Clock, and Multi-language support.
  */
 
 const translations = {
@@ -25,8 +25,8 @@ const translations = {
         secNotifications: "🔔 نوٹیفکیشن",
         enableNotif: "براؤزر نوٹیفکیشن کی اجازت:",
         allowBtn: "اجازت دیں",
-        firstReminderLabel: "پہلی یاد دہانی (منٹ پہلے):",
-        secondReminderLabel: "دوسری یاد دہانی (منٹ):",
+        firstReminderLabel: "پہلی یاد دہانی کا وقت:",
+        secondReminderLabel: "دوسری یاد دہانی کا وقت:",
         secSound: "🎵 آواز اور رنگ ٹون",
         enableSound: "آواز فعال کریں",
         volumeLabel: "آواز کی سطح:",
@@ -63,8 +63,8 @@ const translations = {
         secNotifications: "🔔 Notifications",
         enableNotif: "Browser Notification Permission:",
         allowBtn: "Allow",
-        firstReminderLabel: "First Reminder (Mins Before):",
-        secondReminderLabel: "Second Reminder (Offset Mins):",
+        firstReminderLabel: "First Reminder Time:",
+        secondReminderLabel: "Second Reminder Time:",
         secSound: "🎵 Sound & Ringtone",
         enableSound: "Enable Sound",
         volumeLabel: "Volume Level:",
@@ -101,8 +101,8 @@ const translations = {
         secNotifications: "🔔 الإشعارات",
         enableNotif: "إذن إشعارات المتصفح:",
         allowBtn: "سماح",
-        firstReminderLabel: "التذكير الأول (دقائق قبل):",
-        secondReminderLabel: "التذكير الثاني (دقائق):",
+        firstReminderLabel: "وقت التذكير الأول:",
+        secondReminderLabel: "وقت التذكير الثاني:",
         secSound: "🎵 الصوت ونغمة الرنين",
         enableSound: "تفعيل الصوت",
         volumeLabel: "مستوى الصوت:",
@@ -122,16 +122,16 @@ const translations = {
 
 const defaultVoiceScripts = {
     en: {
-        first: ["Attention {name}. {prayer} prayer is coming up in {mins} minutes. Please finish your tasks and get ready for Wudu."],
-        second: ["Assalamu Alaikum {name}. It is now time for {prayer} prayer. Please rise and proceed for Salah. May Allah accept your worship."]
+        first: ["Attention {name}. {prayer} prayer time is approaching at {time}."],
+        second: ["Assalamu Alaikum {name}. It is now time for {prayer} prayer at {time}."]
     },
     ar: {
-        first: ["تنبيه {name}. اقتربت صلاة {prayer} خلال {mins} دقائق. يرجى الاستعداد للوضوء."],
-        second: ["السلام عليكم {name}. حان الآن وقت صلاة {prayer}. تقبل الله طاعتكم."]
+        first: ["تنبيه {name}. اقتربت صلاة {prayer} في تمام الساعة {time}."],
+        second: ["السلام عليكم {name}. حان الآن وقت صلاة {prayer} في تمام الساعة {time}."]
     },
     ur: {
-        first: ["توجہ فرمائیں {name}۔ {prayer} کی نماز میں {mins} منٹ باقی ہیں۔ براہ کرم اپنے کام ختم کر کے وضو کی تیاری کریں۔"],
-        second: ["السلام علیکم {name}۔ {prayer} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں باجماعت نماز کی توفیق عطا فرمائے۔"]
+        first: ["توجہ فرمائیں {name}۔ {prayer} کی نماز کا وقت {time} پر ہونے والا ہے۔"],
+        second: ["السلام علیکم {name}۔ {prayer} کی نماز کا وقت {time} ہو چکا ہے۔"]
     }
 };
 
@@ -158,8 +158,8 @@ let ringtoneType = localStorage.getItem('ringtone') || 'chime';
 let userName = localStorage.getItem('userName') || 'محمد';
 let selectedCityKey = localStorage.getItem('cityKey') || 'karachi';
 let calcMethod = localStorage.getItem('calcMethod') || 'Karachi';
-let firstReminderMins = parseInt(localStorage.getItem('firstReminderMins') || '5', 10);
-let secondReminderOffset = parseInt(localStorage.getItem('secondReminderOffset') || '0', 10);
+let firstReminderTime = localStorage.getItem('firstReminderTime') || '05:00';
+let secondReminderTime = localStorage.getItem('secondReminderTime') || '12:00';
 let currentDateStr = new Date().toDateString();
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -186,7 +186,6 @@ function updateCitySettings(key) {
 function getSelectedCityTime() {
     const c = cityDatabase[selectedCityKey] || cityDatabase.karachi;
     const now = new Date();
-    // Calculate UTC time in milliseconds, then apply selected city timezone offset (hours)
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
     return new Date(utcTime + (3600000 * c.tz));
 }
@@ -392,24 +391,15 @@ function updateClock() {
     updateTimeRemaining();
 }
 
-function addMinutes(timeStr, mins) {
-    const [h, m] = timeStr.split(':').map(Number);
-    let total = (h * 60 + m + mins) % 1440;
-    if (total < 0) total += 1440;
-    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-}
-
 function checkReminders() {
     const cityTime = getSelectedCityTime();
     const nowStr = `${String(cityTime.getHours()).padStart(2, '0')}:${String(cityTime.getMinutes()).padStart(2, '0')}`;
     
     for (let k in todayPrayers) {
         const p = todayPrayers[k];
-        const r1 = addMinutes(p.time, -firstReminderMins);
-        const r2 = addMinutes(p.time, secondReminderOffset);
         
-        if (nowStr === r1 || nowStr === r2) {
-            const isFirst = nowStr === r1;
+        if (nowStr === firstReminderTime || nowStr === secondReminderTime) {
+            const isFirst = nowStr === firstReminderTime;
             const storageKey = `notif_${p.key}_${isFirst ? '1' : '2'}_${cityTime.toDateString()}`;
             if (!localStorage.getItem(storageKey)) {
                 localStorage.setItem(storageKey, 'true');
@@ -426,9 +416,10 @@ function checkReminders() {
 function triggerSystemNotification(prayer, isFirst) {
     if ('Notification' in window && Notification.permission === 'granted') {
         const title = `${prayer.name}`;
+        const targetTime = isFirst ? firstReminderTime : secondReminderTime;
         const body = isFirst
-            ? (currentLang === 'en' ? `${firstReminderMins} mins remaining until ${prayer.name}` : `نماز کا وقت ہونے میں ${firstReminderMins} منٹ باقی ہیں۔`)
-            : (currentLang === 'en' ? `It is time for ${prayer.name}` : `نماز کا وقت ہو گیا ہے (${formatTimeLocalized(prayer.time)})۔`);
+            ? (currentLang === 'en' ? `Reminder for ${prayer.name} at ${targetTime}` : `نماز ${prayer.name} کا یاد دہانی وقت (${targetTime}) ہو گیا ہے۔`)
+            : (currentLang === 'en' ? `Second reminder for ${prayer.name} at ${targetTime}` : `دوسਰੀ یاد دہانی وقت (${targetTime})۔`);
         new Notification(title, { body, icon: 'icon-192.png', tag: `${prayer.key}_${isFirst ? 1 : 2}` });
     }
 }
@@ -506,12 +497,13 @@ function showCallScreen(prayer, isFirst) {
     document.getElementById('callPrayerName').textContent = prayer.name;
     document.getElementById('callPrayerTime').textContent = formatTimeLocalized(prayer.time);
 
+    const targetTime = isFirst ? firstReminderTime : secondReminderTime;
     if (currentLang === 'en') {
-        document.getElementById('callMessage').textContent = isFirst ? `Heads up: ${firstReminderMins} mins remaining` : `Final Call: It is time for prayer`;
+        document.getElementById('callMessage').textContent = isFirst ? `Scheduled Reminder at ${targetTime}` : `Final Scheduled Call at ${targetTime}`;
     } else if (currentLang === 'ar') {
-        document.getElementById('callMessage').textContent = isFirst ? `تنبيه: متبقي ${firstReminderMins} دقائق` : `نداء نهائي: حان وقت الصلاة`;
+        document.getElementById('callMessage').textContent = isFirst ? `تذكير مجدول في الساعة ${targetTime}` : `نداء نهائي في الساعة ${targetTime}`;
     } else {
-        document.getElementById('callMessage').textContent = isFirst ? `پہلی یاد دہانی: نماز میں ${convertToUrduNumbers(firstReminderMins)} منٹ باقی ہیں` : `آخری یاد دہانی: نماز کا وقت ہو گیا ہے`;
+        document.getElementById('callMessage').textContent = isFirst ? `مقررہ یاد دہانی وقت: ${targetTime}` : `آخری مقررہ یاد دہانی وقت: ${targetTime}`;
     }
     window.currentPrayer = { prayer, isFirst };
     playRingtone();
@@ -562,14 +554,12 @@ async function getDynamicReminderScript(lang, stage, prayerName) {
         ? templates[Math.floor(Math.random() * templates.length)]
         : templates;
 
-    const formattedMins = (lang === 'ur' || lang === 'ar')
-        ? convertToUrduNumbers(firstReminderMins)
-        : firstReminderMins;
+    const targetTime = stage === 'first' ? firstReminderTime : secondReminderTime;
 
     return template
         .replace(/\{name\}/g, userName)
         .replace(/\{prayer\}/g, prayerName)
-        .replace(/\{mins\}/g, formattedMins);
+        .replace(/\{time\}/g, targetTime);
 }
 
 async function answerCall() {
@@ -652,8 +642,8 @@ function saveSettings() {
     userName = document.getElementById('userNameInput').value || 'محمد';
     selectedCityKey = document.getElementById('citySelect').value;
     calcMethod = document.getElementById('methodSelect').value;
-    firstReminderMins = parseInt(document.getElementById('firstReminderInput').value, 10) || 0;
-    secondReminderOffset = parseInt(document.getElementById('secondReminderInput').value, 10) || 0;
+    firstReminderTime = document.getElementById('firstReminderInput').value || '05:00';
+    secondReminderTime = document.getElementById('secondReminderInput').value || '12:00';
 
     localStorage.setItem('lang', currentLang);
     localStorage.setItem('soundEnabled', soundEnabled);
@@ -662,8 +652,8 @@ function saveSettings() {
     localStorage.setItem('userName', userName);
     localStorage.setItem('cityKey', selectedCityKey);
     localStorage.setItem('calcMethod', calcMethod);
-    localStorage.setItem('firstReminderMins', firstReminderMins);
-    localStorage.setItem('secondReminderOffset', secondReminderOffset);
+    localStorage.setItem('firstReminderTime', firstReminderTime);
+    localStorage.setItem('secondReminderTime', secondReminderTime);
 
     updateCitySettings(selectedCityKey);
     calculator.setMethod(calcMethod);
@@ -731,8 +721,8 @@ function loadSettingsUI() {
     document.getElementById('userNameInput').value = userName;
     document.getElementById('citySelect').value = selectedCityKey;
     document.getElementById('methodSelect').value = calcMethod;
-    document.getElementById('firstReminderInput').value = firstReminderMins;
-    document.getElementById('secondReminderInput').value = secondReminderOffset;
+    document.getElementById('firstReminderInput').value = firstReminderTime;
+    document.getElementById('secondReminderInput').value = secondReminderTime;
 }
 
 function formatTimeLocalized(time) {
