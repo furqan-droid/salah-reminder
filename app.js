@@ -1,8 +1,9 @@
 /**
-- Salah Reminder v3.2 - Complete Application Logic
-- Includes: Multi-language (Urdu/English/Arabic), Urdu digit conversion,
-- Custom Reminder Offsets, AudioContext Ringtones, Web Push Notifications,
-- Interactive Prayer Tracker, and Weekly Summary Report.
+ * Salah Reminder v3.3 - Complete Application Logic
+ * Includes: Dynamic Internet-Synced Voice Scripts (with offline fallback),
+ * Multi-language (Urdu/English/Arabic), Urdu digit conversion,
+ * Custom Reminder Offsets, AudioContext Ringtones, Web Push Notifications,
+ * Interactive Prayer Tracker, and Weekly Summary Report.
  */
 
 const translations = {
@@ -110,6 +111,22 @@ const translations = {
     }
 };
 
+// Built-in offline fallback scripts
+const defaultVoiceScripts = {
+    en: {
+        first: ["Attention {name}. {prayer} prayer is coming up in {mins} minutes. Please finish your tasks and get ready for Wudu."],
+        second: ["Assalamu Alaikum {name}. It is now time for {prayer} prayer. Please rise and proceed for Salah. May Allah accept your worship."]
+    },
+    ar: {
+        first: ["تنبيه {name}. اقتربت صلاة {prayer} خلال {mins} دقائق. يرجى الاستعداد للوضوء."],
+        second: ["السلام عليكم {name}. حان الآن وقت صلاة {prayer}. تقبل الله طاعتكم."]
+    },
+    ur: {
+        first: ["توجہ فرمائیں {name}۔ {prayer} کی نماز میں {mins} منٹ باقی ہیں۔ براہ کرم اپنے کام ختم کر کے وضو کی تیاری کریں۔"],
+        second: ["السلام علیکم {name}۔ {prayer} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں باجماعت نماز کی توفیق عطا فرمائے۔"]
+    }
+};
+
 const cityDatabase = {
     karachi: { lat: 24.8607, lng: 67.0011, tz: 5 },
     lahore: { lat: 31.5204, lng: 74.3587, tz: 5 },
@@ -138,7 +155,6 @@ let secondReminderOffset = parseInt(localStorage.getItem('secondReminderOffset')
 let currentDateStr = new Date().toDateString();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Sync dropdown and language state immediately on load
     const langSelect = document.getElementById('langSelect');
     if (langSelect) {
         currentLang = localStorage.getItem('lang') || langSelect.value;
@@ -214,7 +230,7 @@ function displayTracker() {
     trackerList.innerHTML = '';
     
     const todayKey = new Date().toDateString();
-    const btnTextDone = currentLang === 'en' ? '✓ Completed' : (currentLang === 'ar' ? '✓ تم' : '✓ ادا कर لی');
+    const btnTextDone = currentLang === 'en' ? '✓ Completed' : (currentLang === 'ar' ? '✓ تم' : '✓ ادا کر لی');
     const btnTextPending = currentLang === 'en' ? '○ Pending' : (currentLang === 'ar' ? '○ باقي' : '○ باقی ہے');
 
     for (let k in todayPrayers) {
@@ -224,9 +240,6 @@ function displayTracker() {
 
         const div = document.createElement('div');
         div.className = 'prayer-item';
-        div.style.display = 'flex';
-        div.style.justifyContent = 'space-between';
-        div.style.alignItems = 'center';
 
         div.innerHTML = `
             <span>${p.name}</span>
@@ -471,7 +484,7 @@ function stopRingtone() {
 function showCallScreen(prayer, isFirst) {
     document.getElementById('mainScreen').classList.remove('active');
     document.getElementById('settingsScreen').classList.remove('active');
-    if(document.getElementById('reportScreen')) document.getElementById('reportScreen').classList.remove('active');
+    if (document.getElementById('reportScreen')) document.getElementById('reportScreen').classList.remove('active');
     document.getElementById('callScreen').classList.add('active');
     document.getElementById('callPrayerName').textContent = prayer.name;
     document.getElementById('callPrayerTime').textContent = formatTimeLocalized(prayer.time);
@@ -487,33 +500,60 @@ function showCallScreen(prayer, isFirst) {
     playRingtone();
 }
 
-function answerCall() {
+// Fetch live script from reminders.json with 3-second timeout & offline fallback
+async function getDynamicReminderScript(lang, stage, prayerName) {
+    let scriptPool = defaultVoiceScripts;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(`reminders.json?t=${Date.now()}`, {
+            cache: 'no-store',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const remoteData = await response.json();
+            if (remoteData && remoteData[lang] && remoteData[lang][stage]) {
+                scriptPool = remoteData;
+                localStorage.setItem('cachedReminders', JSON.stringify(remoteData));
+            }
+        }
+    } catch (err) {
+        // Offline or timeout: check last cached remote scripts before falling back to hardcoded defaults
+        const cached = localStorage.getItem('cachedReminders');
+        if (cached) {
+            try { scriptPool = JSON.parse(cached); } catch (e) {}
+        }
+    }
+
+    const langBlock = scriptPool[lang] || defaultVoiceScripts[lang] || defaultVoiceScripts.ur;
+    const templates = langBlock[stage] || defaultVoiceScripts.ur[stage];
+    const template = Array.isArray(templates)
+        ? templates[Math.floor(Math.random() * templates.length)]
+        : templates;
+
+    const formattedMins = (lang === 'ur' || lang === 'ar')
+        ? convertToUrduNumbers(firstReminderMins)
+        : firstReminderMins;
+
+    return template
+        .replace(/\{name\}/g, userName)
+        .replace(/\{prayer\}/g, prayerName)
+        .replace(/\{mins\}/g, formattedMins);
+}
+
+async function answerCall() {
     stopRingtone();
     document.getElementById('callScreen').classList.remove('active');
     document.getElementById('activeCallScreen').classList.add('active');
     const { prayer, isFirst } = window.currentPrayer;
     document.getElementById('activePrayerName').textContent = prayer.name;
 
-    let text = '';
-    if (currentLang === 'en') {
-        if (isFirst) {
-            text = `Assalamu Alaikum ${userName}. Heads up, ${prayer.name} prayer is approaching in ${firstReminderMins} minutes. Please prepare for Wudu.`;
-        } else {
-            text = `Assalamu Alaikum ${userName}. It is now time for ${prayer.name} prayer. May Allah accept our prayers.`;
-        }
-    } else if (currentLang === 'ar') {
-        if (isFirst) {
-            text = `السلام عليكم ${userName}. تنبيه، اقتربت صلاة ${prayer.name} خلال ${firstReminderMins} دقائق. يرجى الاستعداد للوضوء.`;
-        } else {
-            text = `السلام عليكم ${userName}. حان الآن وقت صلاة ${prayer.name}. تقبل الله طاعتكم.`;
-        }
-    } else {
-        if (isFirst) {
-            text = `السلام علیکم ${userName}۔ ${prayer.name} کی نماز میں ${convertToUrduNumbers(firstReminderMins)} منٹ باقی ہیں۔ برائے مہربانی وضو کی تیاری کریں۔`;
-        } else {
-            text = `السلام علیکم ${userName}۔ ${prayer.name} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں نماز کی توفیق دے۔`;
-        }
-    }
+    const stage = isFirst ? 'first' : 'second';
+    const text = await getDynamicReminderScript(currentLang, stage, prayer.name);
+
     document.getElementById('reminderText').innerHTML = `<p>${text}</p>`;
     
     if ('speechSynthesis' in window && soundEnabled) {
@@ -556,9 +596,9 @@ function applyLanguage() {
     document.getElementById('headerSubtitle').textContent = t.subtitle;
     document.getElementById('nextPrayerTitle').textContent = t.nextPrayer;
     document.getElementById('todayPrayersTitle').textContent = t.todayPrayers;
-    if(document.getElementById('trackerTitle')) document.getElementById('trackerTitle').textContent = t.trackerTitle;
+    if (document.getElementById('trackerTitle')) document.getElementById('trackerTitle').textContent = t.trackerTitle;
     document.getElementById('testBtn').textContent = t.testBtn;
-    if(document.getElementById('reportBtn')) document.getElementById('reportBtn').textContent = t.reportBtn;
+    if (document.getElementById('reportBtn')) document.getElementById('reportBtn').textContent = t.reportBtn;
     document.getElementById('settingsBtn').textContent = t.settingsBtn;
     document.getElementById('backBtn').textContent = t.backBtn;
     document.getElementById('settingsTitle').textContent = t.settingsBtn;
