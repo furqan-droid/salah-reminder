@@ -1,0 +1,32 @@
+{
+  "en": {
+    "first": [
+      "Attention {name}. {prayer} prayer is approaching in {mins} minutes. Please finish up and prepare for Wudu.",
+      "Heads up {name}. Only {mins} minutes left until {prayer} prayer. Time to get ready for Salah."
+    ],
+    "second": [
+      "Assalamu Alaikum {name}. It is now time for {prayer} prayer. Please rise and proceed for Salah.",
+      "Assalamu Alaikum {name}. The time for {prayer} has begun. May Allah accept your worship."
+    ]
+  },
+  "ur": {
+    "first": [
+      "توجہ فرمائیں {name}۔ {prayer} کی نماز میں {mins} منٹ باقی ہیں۔ براہ کرم وضو کی تیاری کریں۔",
+      "یاد دہانی {name}۔ {prayer} کا وقت ہونے میں صرف {mins} منٹ رہ گئے ہیں۔"
+    ],
+    "second": [
+      "السلام علیکم {name}۔ {prayer} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں باجماعت نماز کی توفیق دے۔",
+      "السلام علیکم {name}۔ {prayer} کا وقت شروع ہو گیا ہے۔ نماز کے لیے تشریف لے جائیں۔"
+    ]
+  },
+  "ar": {
+    "first": [
+      "تنبيه {name}. اقتربت صلاة {prayer} خلال {mins} دقائق. يرجى الاستعداد للوضوء.",
+      "تذكير {name}. بقي {mins} دقائق على صلاة {prayer}."
+    ],
+    "second": [
+      "السلام عليكم {name}. حان الآن وقت صلاة {prayer}. تقبل الله طاعتكم.",
+      "السلام عليكم {name}. دخل وقت صلاة {prayer}. حي على الصلاة."
+    ]
+  }
+}
