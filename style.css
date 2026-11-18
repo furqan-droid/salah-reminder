@@ -1,4 +1,4 @@
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; direction: ltr; text-align: left; }
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
 body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #fff; min-height: 100vh; }
 .screen { display: none; min-height: 100vh; padding: 20px; max-width: 540px; margin: 0 auto; }
 .screen.active { display: block; }
@@ -25,12 +25,12 @@ body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #ff
 .status-indicator { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; background: rgba(255,255,255,0.1); }
 .status-indicator.active { background: rgba(76, 175, 80, 0.35); }
 .status-indicator.inactive { background: rgba(244, 67, 54, 0.35); }
-.settings-header { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+.settings-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); }
 .setting-group h3 { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15); }
 .setting-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .setting-item:last-child { border-bottom: none; }
-.setting-select, .setting-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 8px 10px; max-width: 55%; text-align: left; }
-.setting-input[type="time"], .setting-input[type="text"] { width: 130px; text-align: center; }
+.setting-select, .setting-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 8px 10px; max-width: 55%; }
+.setting-input[type="number"] { width: 80px; text-align: center; }
 .setting-select option { background: #1a472a; color: #fff; }
 .setting-range { width: 45%; }
 #saveSettingsBtn { width: 100%; background: #4CAF50; padding: 14px; font-size: 1.1em; font-weight: bold; border-radius: 12px; border: none; color: #fff; cursor: pointer; }
