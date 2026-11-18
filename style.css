@@ -1,428 +1,49 @@
-/* ==========================================
-   Salah Reminder PWA - Modern App Stylesheet
-   ========================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #fff; min-height: 100vh; }
+.screen { display: none; min-height: 100vh; padding: 20px; max-width: 540px; margin: 0 auto; }
+.screen.active { display: block; }
+.header { text-align: center; padding: 20px 0; }
+.header h1 { font-size: 2em; margin-bottom: 5px; }
+.subtitle { opacity: 0.85; font-size: 0.95em; }
+.status-card, .today-prayers, .setting-group { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin: 15px 0; }
+.current-time { font-size: 2.5em; font-weight: bold; text-align: center; }
+.current-date { text-align: center; opacity: 0.9; margin-top: 4px; }
+.next-prayer-card { background: linear-gradient(135deg, #2d7a4a 0%, #3a9d5d 100%); border-radius: 15px; padding: 22px; text-align: center; }
+.prayer-name { font-size: 2em; font-weight: bold; margin: 6px 0; }
+.prayer-time { font-size: 1.8em; font-weight: bold; }
+.time-remaining { margin-top: 6px; opacity: 0.95; }
+.today-prayers h3 { text-align: center; margin-bottom: 12px; }
+.prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 10px; }
+.prayer-item.passed { opacity: 0.5; }
+.prayer-name-small { font-weight: bold; }
+.controls { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+.btn-test, .btn-secondary, .btn-back, .btn-permission { padding: 14px 18px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: bold; cursor: pointer; color: #fff; }
+.btn-test, .btn-permission { background: #4CAF50; }
+.btn-permission { padding: 8px 16px; font-size: 0.95em; }
+.btn-secondary, .btn-back { background: rgba(255,255,255,0.2); }
+.status-info { margin-top: 16px; text-align: center; }
+.status-indicator { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; background: rgba(255,255,255,0.1); }
+.status-indicator.active { background: rgba(76, 175, 80, 0.35); }
+.status-indicator.inactive { background: rgba(244, 67, 54, 0.35); }
+.settings-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+.setting-group h3 { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+.setting-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.setting-item:last-child { border-bottom: none; }
+.setting-select, .setting-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 8px 10px; max-width: 55%; }
+.setting-input[type="number"] { width: 80px; text-align: center; }
+.setting-select option { background: #1a472a; color: #fff; }
+.setting-range { width: 45%; }
+.call-screen, .active-call-screen { background: #1a1a2e; text-align: center; padding: 40px 20px; }
+.caller-icon { font-size: 5em; margin-bottom: 15px; }
+.prayer-info { background: rgba(255,255,255,0.1); border-radius: 18px; padding: 25px; margin: 25px 0; }
+.prayer-name-large { font-size: 2.2em; font-weight: bold; }
+.prayer-time-large { font-size: 1.8em; margin: 10px 0; }
+.call-controls { display: flex; justify-content: center; gap: 25px; margin-top: 30px; }
+.btn-answer, .btn-decline, .btn-end-call { padding: 16px 26px; border: none; border-radius: 30px; font-size: 1.05em; font-weight: bold; cursor: pointer; color: #fff; }
+.btn-answer { background: #4CAF50; }
+.btn-decline, .btn-end-call { background: #f44336; }
+.reminder-text { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin: 25px 0; line-height: 1.7; font-size: 1.15em; }
+.audio-badge { background: rgba(76, 175, 80, 0.25); padding: 4px 10px; border-radius: 12px; display: inline-block; }
+```[cite: 9]
 
-:root {
-    --primary-bg: #11382b;
-    --card-bg: rgba(255, 255, 255, 0.08);
-    --card-border: rgba(255, 255, 255, 0.15);
-    --text-color: #ffffff;
-    --text-muted: rgba(255, 255, 255, 0.75);
-    --accent-color: #2e7d32;
-    --accent-hover: #388e3c;
-    --danger-color: #d32f2f;
-    --radius: 16px;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-}
-
-body {
-    background-color: var(--primary-bg);
-    color: var(--text-color);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 16px;
-}
-
-/* App Container / Screen Management */
-.screen {
-    display: none;
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto;
-    padding-bottom: 40px;
-}
-
-.screen.active {
-    display: block;
-}
-
-/* Header */
-.app-header {
-    text-align: center;
-    margin-bottom: 20px;
-    padding-top: 10px;
-}
-
-.app-header h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.app-header p {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-}
-
-/* Language Bar */
-.lang-bar {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    padding: 10px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    font-size: 0.9rem;
-}
-
-.lang-bar select {
-    background: rgba(0, 0, 0, 0.3);
-    color: var(--text-color);
-    border: 1px solid var(--card-border);
-    padding: 6px 12px;
-    border-radius: 8px;
-    outline: none;
-    cursor: pointer;
-}
-
-/* Clock Card */
-.clock-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    text-align: center;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-#currentTime {
-    font-size: 2.4rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    margin-bottom: 4px;
-}
-
-#currentDate {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-}
-
-/* General Cards */
-.card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    padding: 18px;
-    margin-bottom: 16px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.card h3 {
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-    font-weight: 600;
-    border-bottom: 1px solid var(--card-border);
-    padding-bottom: 8px;
-}
-
-/* Next Prayer Card Special */
-.next-prayer-card {
-    background: linear-gradient(135deg, #1b5e20, #004d40);
-    text-align: center;
-}
-
-.prayer-big-name {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 8px 0;
-}
-
-.prayer-big-time {
-    font-size: 1.3rem;
-    font-weight: 500;
-    color: #a5d6a7;
-    margin-bottom: 6px;
-}
-
-#timeRemaining {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-/* Prayer Times List */
-.prayers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.prayer-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    font-size: 0.95rem;
-}
-
-.prayer-item.passed {
-    opacity: 0.5;
-}
-
-.prayer-name-small {
-    font-weight: 600;
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: var(--radius);
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.primary-btn {
-    background: #2e7d32;
-    color: #ffffff;
-    box-shadow: 0 4px 15px rgba(46, 125, 50,.4);
-}
-
-.primary-btn:hover {
-    background: #388e3c;
-}
-
-.secondary-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border: 1px solid var(--card-border);
-}
-
-.secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
-}
-
-.back-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    width: auto;
-    padding: 8px 16px;
-    margin-bottom: 16px;
-    font-size: 0.9rem;
-}
-
-/* Settings Screen Layout */
-.settings-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 16px;
-}
-
-.settings-card h3 {
-    margin-bottom: 12px;
-}
-
-.settings-card label {
-    display: block;
-    font-size: 0.9rem;
-    margin: 12px 0 6px;
-    color: var(--text-muted);
-}
-
-.settings-card input[type="text"],
-.settings-card input[type="number"],
-.settings-card select {
-    width: 100%;
-    padding: 10px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    color: var(--text-color);
-    font-size: 0.95rem;
-    outline: none;
-}
-
-.settings-card input[type="checkbox"] {
-    margin-right: 8px;
-    transform: scale(1.1);
-}
-
-.volume-slider-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.volume-slider-group input[type="range"] {
-    flex: 1;
-    accent-color: #2e7d32;
-}
-
-.status-indicator {
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.85srem;
-    margin-top: 8px;
-    text-align: center;
-}
-
-.status-indicator.active {
-    background: rgba(76, 175, 80, 0.2);
-    color: #81c784;
-    border: 1px solid rgba(76, 175, 80, 0.4);
-}
-
-.status-indicator.inactive {
-    background: rgba(211, 47, 47, 0.2);
-    color: #e57373;
-    border: 1px solid rgba(211, 47, 47, 0.4);
-}
-
-.permit-btn {
-    background: #37474f;
-    color: #fff;
-    margin-top: 8px;
-    padding: 10px;
-}
-
-/* Call Screens Overlay */
-.call-screen {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: radial-gradient(circle at center, #1b4d3e 0%, #081c15 100%);
-    z-index: 9999;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 40px 24px;
-    text-align: center;
-}
-
-.call-screen.active {
-    display: flex;
-}
-
-.call-header-info h3 {
-    font-size: 1.1rem;
-    color: var(--text-muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.call-caller-box h2 {
-    font-size: 2.8rem;
-    font-weight: 800;
-    margin: 10px 0;
-}
-
-.call-caller-box p {
-    font-size: 1.2rem;
-    color: var(--text-muted);
-}
-
-.call-message-text {
-    font-size: 1.1rem !important;
-    color: #a5d6a7 !important;
-    margin-top: 15px;
-}
-
-.active-call-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-}
-
-.speaker-avatar {
-    font-size: 4rem;
-    background: rgba(255, 255, 255, 0.1);
-    width: 100px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3); }
-    70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-
-.reminder-spoken-text {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 16px 20px;
-    border-radius: var(--radius);
-    max-width: 400px;
-    font-size: 1.1rem;
-    line-height: 1.5;
-}
-
-.call-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.call-btn {
-    flex: 1;
-    padding: 16px;
-    border-radius: 50px;
-    border: none;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #fff;
-}
-
-.accept-btn {
-    background: #2e7d32;
-    box-shadow: 0 4px 20px rgba(46, 125, 50, 0.5);
-}
-
-.decline-btn {
-    background: #d32f2f;
-    box-shadow: 0 4px 20px rgba(211, 47, 47, 0.5);
-}
-
-.full-width-end {
-    max-width: 250px;
-    border-radius: var(--radius);
-}
-
-/* Standalone PWA adjustments */
-@media all and (display-mode: standalone) {
-    body {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-}
+With these saved along with `index.html`, `app.js`, `sw.js`, and `reminders.json`, your entire codebase is complete, optimized, and fully synchronized.
