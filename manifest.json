@@ -14,5 +14,4 @@
   ]
 }
 ```[cite: 6]
-
 Once you remove that stray line and commit, your GitHub Pages workflow will pass successfully!
