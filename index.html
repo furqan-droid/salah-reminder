@@ -9,7 +9,7 @@
     <title>نماز یاد دہانی - Salah Reminder</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="style.css?v=3.4">
+    <link rel="stylesheet" href="style.css?v=3.5">
 </head>
 <body>
     <!-- Main Screen -->
@@ -55,15 +55,13 @@
     <!-- Weekly Report Screen -->
     <div id="reportScreen" class="screen report-screen">
         <div class="settings-header">
-            <button onclick="hideReportScreen()" class="btn-back">← واپس</button>
-            <h2>📈 نماز کی ہفتہ وار رپورٹ</h2>
+            <button onclick="hideReportScreen()" class="btn-back" id="reportBackBtn">← واپس</button>
+            <h2 id="reportTitle">📈 نماز کی ہفتہ وار رپورٹ</h2>
         </div>
         <div class="settings-content" style="margin-top: 20px;">
             <div class="setting-group" style="text-align: center; padding: 25px;">
-                <h3>پچھلے 7 دنوں کا خلاصہ</h3>
-                <div id="weeklyReportSummary" style="margin-top: 15px; font-size: 1.1em; line-height: 1.8;">
-                    <!-- Report details injected dynamically -->
-                </div>
+                <h3 id="reportSummaryTitle">پچھلے 7 دنوں کا خلاصہ</h3>
+                <div id="weeklyReportSummary" style="margin-top: 15px; font-size: 1.1em; line-height: 1.8;"></div>
             </div>
         </div>
     </div>
@@ -94,7 +92,6 @@
             <div class="active-call-header">
                 <div class="caller-icon-small">🕌</div>
                 <div class="call-status" id="activeCallStatusLabel">جاری ہے...</div>
-                <!-- Headset Mode Badge -->
                 <div id="audioOutputBadge" class="audio-badge" style="display: none; font-size: 0.85rem; color: #a5d6a7; margin-top: 4px;">🎧 Headset Mode</div>
             </div>
             <div class="active-prayer-info">
@@ -116,7 +113,7 @@
                 <h3>🌐 Language / زبان / اللغة</h3>
                 <div class="setting-item">
                     <label>Language:</label>
-                    <select id="langSelect" class="setting-select">
+                    <select id="langSelect" onchange="updateLanguage(this.value)" class="setting-select">
                         <option value="ur">اردو (Urdu)</option>
                         <option value="en">English</option>
                         <option value="ar">العربية (Arabic)</option>
@@ -194,15 +191,14 @@
                 </div>
             </div>
 
-            <!-- Save Settings Button Group -->
             <div class="setting-group" style="text-align: center; border: none; padding-top: 5px;">
                 <button onclick="saveSettings()" id="saveSettingsBtn">💾 ترتیبات محفوظ کریں</button>
             </div>
         </div>
     </div>
 
-    <script src="prayer-times.js?v=3.4"></script>
-    <script src="app.js?v=3.4"></script>
+    <script src="prayer-times.js?v=3.5"></script>
+    <script src="app.js?v=3.5"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
