@@ -9,7 +9,7 @@
     <title>نماز یاد دہانی - Salah Reminder</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="style.css?v=3.5">
+    <link rel="stylesheet" href="style.css?v=3.6">
 </head>
 <body>
     <!-- Main Screen -->
@@ -128,12 +128,12 @@
                     <button onclick="requestNotificationPermission()" class="btn-permission" id="btnNotifPerm">اجازت دیں</button>
                 </div>
                 <div class="setting-item">
-                    <label id="lblFirstRem">پہلی یاد دہانی (منٹ پہلے):</label>
-                    <input type="number" id="firstReminderInput" min="0" max="60" value="5" class="setting-input">
+                    <label id="lblFirstRem">پہلی یاد دہانی کا وقت:</label>
+                    <input type="time" id="firstReminderInput" class="setting-input">
                 </div>
                 <div class="setting-item">
-                    <label id="lblSecondRem">دوسری یاد دہانی (منٹ):</label>
-                    <input type="number" id="secondReminderInput" min="-30" max="60" value="0" class="setting-input">
+                    <label id="lblSecondRem">دوسری یاد دہانی کا وقت:</label>
+                    <input type="time" id="secondReminderInput" class="setting-input">
                 </div>
             </div>
 
@@ -197,8 +197,8 @@
         </div>
     </div>
 
-    <script src="prayer-times.js?v=3.5"></script>
-    <script src="app.js?v=3.5"></script>
+    <script src="prayer-times.js?v=3.6"></script>
+    <script src="app.js?v=3.6"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
