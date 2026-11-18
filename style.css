@@ -30,7 +30,7 @@ body { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: #ff
 .setting-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .setting-item:last-child { border-bottom: none; }
 .setting-select, .setting-input { background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 8px 10px; max-width: 55%; }
-.setting-input[type="time"], .setting-input[type="text"] { width: 130px; text-align: center; }
+.setting-input[type="time"], .setting-input[type="text"] { width: 140px; text-align: center; direction: ltr; }
 .setting-select option { background: #1a472a; color: #fff; }
 .setting-range { width: 45%; }
 #saveSettingsBtn { width: 100%; background: #4CAF50; padding: 14px; font-size: 1.1em; font-weight: bold; border-radius: 12px; border: none; color: #fff; cursor: pointer; }
