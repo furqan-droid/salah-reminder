@@ -1,7 +1,6 @@
 /**
- * Salah Reminder v3.4 - Complete Application Logic
- * Includes: Dynamic Internet-Synced Voice Scripts, Headset Mode Detection,
- * Multi-language Support, Explicit Save Settings Action, and Interactive Tracker.
+ * Salah Reminder v3.5 - Complete Application Logic
+ * Includes: Timezone-adjusted Clock, Language Selection fix, Save Settings, and Headset Mode.
  */
 
 const translations = {
@@ -15,6 +14,8 @@ const translations = {
         reportBtn: "📈 رپورٹ دیکھیں",
         settingsBtn: "⚙️ ترتیبات",
         backBtn: "← واپس",
+        reportTitle: "📈 نماز کی ہفتہ وار رپورٹ",
+        reportSummaryTitle: "پچھلے 7 دنوں کا خلاصہ",
         callHeader: "نماز کی یاد دہانی",
         callType: "آواز کال",
         answerBtn: "جواب دیں",
@@ -51,6 +52,8 @@ const translations = {
         reportBtn: "📈 View Report",
         settingsBtn: "⚙️ Settings",
         backBtn: "← Back",
+        reportTitle: "📈 Weekly Prayer Report",
+        reportSummaryTitle: "Last 7 Days Summary",
         callHeader: "Prayer Reminder",
         callType: "Voice Call",
         answerBtn: "Answer",
@@ -87,6 +90,8 @@ const translations = {
         reportBtn: "📈 عرض التقرير",
         settingsBtn: "⚙️ الإعدادات",
         backBtn: "← رجوع",
+        reportTitle: "📈 تقرير الصلاة الأسبوعي",
+        reportSummaryTitle: "ملخص آخر 7 أيام",
         callHeader: "تذكير الصلاة",
         callType: "مكالمة صوتية",
         answerBtn: "رد",
@@ -178,10 +183,19 @@ function updateCitySettings(key) {
     calculator.setLocation(c.lat, c.lng, c.tz);
 }
 
+function getSelectedCityTime() {
+    const c = cityDatabase[selectedCityKey] || cityDatabase.karachi;
+    const now = new Date();
+    // Calculate UTC time in milliseconds, then apply selected city timezone offset (hours)
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    return new Date(utcTime + (3600000 * c.tz));
+}
+
 function initApp() {
-    currentDateStr = new Date().toDateString();
-    const times = calculator.getPrayerTimes(new Date());
-    const isJummah = calculator.isJummah(new Date());
+    const cityTime = getSelectedCityTime();
+    currentDateStr = cityTime.toDateString();
+    const times = calculator.getPrayerTimes(cityTime);
+    const isJummah = calculator.isJummah(cityTime);
 
     const names = {
         ur: { fajr: 'فجر', zuhr: 'ظہر', jummah: 'جمعہ', asr: 'عصر', maghrib: 'مغرب', isha: 'عشاء' },
@@ -207,7 +221,8 @@ function displayPrayerTimes() {
     const list = document.getElementById('prayersList');
     if (!list) return;
     list.innerHTML = '';
-    const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+    const cityTime = getSelectedCityTime();
+    const nowMins = cityTime.getHours() * 60 + cityTime.getMinutes();
 
     for (let k in todayPrayers) {
         const p = todayPrayers[k];
@@ -226,7 +241,8 @@ function displayTracker() {
     if (!trackerList) return;
     trackerList.innerHTML = '';
     
-    const todayKey = new Date().toDateString();
+    const cityTime = getSelectedCityTime();
+    const todayKey = cityTime.toDateString();
     const btnTextDone = currentLang === 'en' ? '✓ Completed' : (currentLang === 'ar' ? '✓ تم' : '✓ ادا کر لی');
     const btnTextPending = currentLang === 'en' ? '○ Pending' : (currentLang === 'ar' ? '○ باقي' : '○ باقی ہے');
 
@@ -249,7 +265,8 @@ function displayTracker() {
 }
 
 function togglePrayerStatus(prayerKey) {
-    const todayKey = new Date().toDateString();
+    const cityTime = getSelectedCityTime();
+    const todayKey = cityTime.toDateString();
     const storageKey = `track_${todayKey}_${prayerKey}`;
     const currentStatus = localStorage.getItem(storageKey) === 'true';
     
@@ -275,9 +292,10 @@ function generateWeeklyReport() {
     let totalCompleted = 0;
     let totalPossible = 0;
     const keys = ['fajr', 'zuhr', 'asr', 'maghrib', 'isha'];
+    const cityTime = getSelectedCityTime();
 
     for (let i = 0; i < 7; i++) {
-        const d = new Date();
+        const d = new Date(cityTime);
         d.setDate(d.getDate() - i);
         const dateStr = d.toDateString();
 
@@ -313,7 +331,8 @@ function generateWeeklyReport() {
 }
 
 function updateNextPrayer() {
-    const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+    const cityTime = getSelectedCityTime();
+    const nowMins = cityTime.getHours() * 60 + cityTime.getMinutes();
     nextPrayer = null;
 
     for (let k in todayPrayers) {
@@ -326,7 +345,7 @@ function updateNextPrayer() {
     }
 
     if (!nextPrayer) {
-        const tomorrow = new Date();
+        const tomorrow = new Date(cityTime);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tTimes = calculator.getPrayerTimes(tomorrow);
         const label = currentLang === 'en' ? 'Fajr (Tomorrow)' : (currentLang === 'ar' ? 'الفجر (غداً)' : 'فجر (کل)');
@@ -340,13 +359,13 @@ function updateNextPrayer() {
 
 function updateTimeRemaining() {
     if (!nextPrayer) return;
-    const now = new Date();
+    const cityTime = getSelectedCityTime();
     const [h, m] = nextPrayer.time.split(':').map(Number);
-    const pTime = new Date();
+    const pTime = new Date(cityTime);
     pTime.setHours(h, m, 0, 0);
-    if (pTime <= now) pTime.setDate(pTime.getDate() + 1);
+    if (pTime <= cityTime) pTime.setDate(pTime.getDate() + 1);
 
-    const diff = pTime - now;
+    const diff = pTime - cityTime;
     const hours = Math.floor(diff / 3600000);
     const mins = Math.floor((diff % 3600000) / 60000);
 
@@ -362,14 +381,14 @@ function updateTimeRemaining() {
 }
 
 function updateClock() {
-    const now = new Date();
-    if (now.toDateString() !== currentDateStr) initApp();
+    const cityTime = getSelectedCityTime();
+    if (cityTime.toDateString() !== currentDateStr) initApp();
 
-    const tStr = now.toLocaleTimeString('en-US', { hour12: false });
+    const tStr = cityTime.toLocaleTimeString('en-US', { hour12: false });
     document.getElementById('currentTime').textContent = (currentLang === 'ur') ? convertToUrduNumbers(tStr) : tStr;
 
     const loc = { ur: 'ur-PK', en: 'en-US', ar: 'ar-SA' }[currentLang] || 'ur-PK';
-    document.getElementById('currentDate').textContent = now.toLocaleDateString(loc, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('currentDate').textContent = cityTime.toLocaleDateString(loc, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     updateTimeRemaining();
 }
 
@@ -381,7 +400,8 @@ function addMinutes(timeStr, mins) {
 }
 
 function checkReminders() {
-    const nowStr = `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
+    const cityTime = getSelectedCityTime();
+    const nowStr = `${String(cityTime.getHours()).padStart(2, '0')}:${String(cityTime.getMinutes()).padStart(2, '0')}`;
     
     for (let k in todayPrayers) {
         const p = todayPrayers[k];
@@ -390,7 +410,7 @@ function checkReminders() {
         
         if (nowStr === r1 || nowStr === r2) {
             const isFirst = nowStr === r1;
-            const storageKey = `notif_${p.key}_${isFirst ? '1' : '2'}_${new Date().toDateString()}`;
+            const storageKey = `notif_${p.key}_${isFirst ? '1' : '2'}_${cityTime.toDateString()}`;
             if (!localStorage.getItem(storageKey)) {
                 localStorage.setItem(storageKey, 'true');
                 triggerSystemNotification(p, isFirst);
@@ -616,6 +636,14 @@ function testReminder() {
 function showSettings() { document.getElementById('mainScreen').classList.remove('active'); document.getElementById('settingsScreen').classList.add('active'); }
 function hideSettings() { document.getElementById('settingsScreen').classList.remove('active'); document.getElementById('mainScreen').classList.add('active'); }
 
+function updateLanguage(v) {
+    currentLang = v;
+    localStorage.setItem('lang', currentLang);
+    applyLanguage();
+    initApp();
+    updateNotificationStatus();
+}
+
 function saveSettings() {
     currentLang = document.getElementById('langSelect').value;
     soundEnabled = document.getElementById('soundEnabled').checked;
@@ -661,7 +689,10 @@ function applyLanguage() {
     if (document.getElementById('reportBtn')) document.getElementById('reportBtn').textContent = t.reportBtn;
     document.getElementById('settingsBtn').textContent = t.settingsBtn;
     document.getElementById('backBtn').textContent = t.backBtn;
+    document.getElementById('reportBackBtn').textContent = t.backBtn;
     document.getElementById('settingsTitle').textContent = t.settingsBtn;
+    document.getElementById('reportTitle').textContent = t.reportTitle;
+    document.getElementById('reportSummaryTitle').textContent = t.reportSummaryTitle;
     document.getElementById('callHeaderTitle').textContent = t.callHeader;
     document.getElementById('callTypeLabel').textContent = t.callType;
     document.getElementById('answerText').textContent = t.answerBtn;
