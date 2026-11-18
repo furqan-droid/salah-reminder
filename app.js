@@ -1,6 +1,6 @@
 /**
- * Salah Reminder v3.6 - Complete Application Logic
- * Includes: Precise Time-based Reminders, Timezone-adjusted Clock, and Multi-language support.
+ * Salah Reminder v3.7 - Complete Application Logic
+ * Includes: Enforced LTR writing direction for all languages, precise time pickers, and timezone-aware clock.
  */
 
 const translations = {
@@ -13,7 +13,7 @@ const translations = {
         testBtn: "🔔 یاد دہانی ٹیسٹ کریں",
         reportBtn: "📈 رپورٹ دیکھیں",
         settingsBtn: "⚙️ ترتیبات",
-        backBtn: "← واپس",
+        backBtn: "واپس ←",
         reportTitle: "📈 نماز کی ہفتہ وار رپورٹ",
         reportSummaryTitle: "پچھلے 7 دنوں کا خلاصہ",
         callHeader: "نماز کی یاد دہانی",
@@ -51,7 +51,7 @@ const translations = {
         testBtn: "🔔 Test Reminder",
         reportBtn: "📈 View Report",
         settingsBtn: "⚙️ Settings",
-        backBtn: "← Back",
+        backBtn: "Back →",
         reportTitle: "📈 Weekly Prayer Report",
         reportSummaryTitle: "Last 7 Days Summary",
         callHeader: "Prayer Reminder",
@@ -89,7 +89,7 @@ const translations = {
         testBtn: "🔔 اختبار التذكير",
         reportBtn: "📈 عرض التقرير",
         settingsBtn: "⚙️ الإعدادات",
-        backBtn: "← رجوع",
+        backBtn: "رجوع ←",
         reportTitle: "📈 تقرير الصلاة الأسبوعي",
         reportSummaryTitle: "ملخص آخر 7 أيام",
         callHeader: "تذكير الصلاة",
@@ -155,7 +155,7 @@ let currentLang = localStorage.getItem('lang') || 'ur';
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 let volume = parseFloat(localStorage.getItem('volume') || '0.8');
 let ringtoneType = localStorage.getItem('ringtone') || 'chime';
-let userName = localStorage.getItem('userName') || 'محمد';
+let userName = localStorage.getItem('userName') || 'Muhammad';
 let selectedCityKey = localStorage.getItem('cityKey') || 'karachi';
 let calcMethod = localStorage.getItem('calcMethod') || 'Karachi';
 let firstReminderTime = localStorage.getItem('firstReminderTime') || '05:00';
@@ -419,7 +419,7 @@ function triggerSystemNotification(prayer, isFirst) {
         const targetTime = isFirst ? firstReminderTime : secondReminderTime;
         const body = isFirst
             ? (currentLang === 'en' ? `Reminder for ${prayer.name} at ${targetTime}` : `نماز ${prayer.name} کا یاد دہانی وقت (${targetTime}) ہو گیا ہے۔`)
-            : (currentLang === 'en' ? `Second reminder for ${prayer.name} at ${targetTime}` : `دوسਰੀ یاد دہانی وقت (${targetTime})۔`);
+            : (currentLang === 'en' ? `Second reminder for ${prayer.name} at ${targetTime}` : `دوسری یاد دہانی وقت (${targetTime})۔`);
         new Notification(title, { body, icon: 'icon-192.png', tag: `${prayer.key}_${isFirst ? 1 : 2}` });
     }
 }
@@ -639,7 +639,7 @@ function saveSettings() {
     soundEnabled = document.getElementById('soundEnabled').checked;
     volume = parseInt(document.getElementById('volumeControl').value, 10) / 100;
     ringtoneType = document.getElementById('ringtoneSelect').value;
-    userName = document.getElementById('userNameInput').value || 'محمد';
+    userName = document.getElementById('userNameInput').value || 'Muhammad';
     selectedCityKey = document.getElementById('citySelect').value;
     calcMethod = document.getElementById('methodSelect').value;
     firstReminderTime = document.getElementById('firstReminderInput').value || '05:00';
@@ -668,7 +668,7 @@ function saveSettings() {
 function applyLanguage() {
     const t = translations[currentLang] || translations.ur;
     document.documentElement.lang = currentLang;
-    document.documentElement.dir = (currentLang === 'en') ? 'ltr' : 'rtl';
+    document.documentElement.dir = "ltr"; // Force strict left-to-right alignment across all languages
 
     document.getElementById('headerTitle').textContent = t.title;
     document.getElementById('headerSubtitle').textContent = t.subtitle;
