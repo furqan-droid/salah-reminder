@@ -1,7 +1,7 @@
 /**
- * Salah Reminder v3.9 - Complete Application Logic
- * Includes: Dynamic RTL/LTR switching for Urdu/Arabic vs English, GPS Geolocation, Wake Lock, 
- * Advanced TTS voice matching, and precise time-based reminders.
+ * Salah Reminder v4.0 - Complete Application Logic
+ * Includes: Strict 24-Hour Time Format across all languages, dynamic RTL/LTR writing direction, 
+ * GPS Geolocation, Wake Lock API, and Advanced TTS Voice Matching.
  */
 
 const translations = {
@@ -438,8 +438,14 @@ function updateClock() {
     const cityTime = getSelectedCityTime();
     if (cityTime.toDateString() !== currentDateStr) initApp();
 
-    const tStr = cityTime.toLocaleTimeString('en-US', { hour12: false });
-    document.getElementById('currentTime').textContent = (currentLang === 'ur') ? convertToUrduNumbers(tStr) : tStr;
+    const hrs = String(cityTime.getHours()).padStart(2, '0');
+    const mins = String(cityTime.getMinutes()).padStart(2, '0');
+    const secs = String(cityTime.getSeconds()).padStart(2, '0');
+    const tStr = `${hrs}:${mins}:${secs}`;
+
+    document.getElementById('currentTime').textContent = (currentLang === 'ur' || currentLang === 'ar')
+        ? convertToUrduNumbers(tStr)
+        : tStr;
 
     const loc = { ur: 'ur-PK', en: 'en-US', ar: 'ar-SA' }[currentLang] || 'ur-PK';
     document.getElementById('currentDate').textContent = cityTime.toLocaleDateString(loc, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -743,7 +749,7 @@ function applyLanguage() {
     const t = translations[currentLang] || translations.ur;
     document.documentElement.lang = currentLang;
     
-    // Automatically switch document writing direction based on language selection
+    // Switch document direction automatically (RTL for Urdu/Arabic, LTR for English)
     const isRtl = (currentLang === 'ur' || currentLang === 'ar');
     document.documentElement.dir = isRtl ? "rtl" : "ltr";
 
@@ -800,25 +806,19 @@ function loadSettingsUI() {
     document.getElementById('citySelect').value = selectedCityKey;
     document.getElementById('methodSelect').value = calcMethod;
     document.getElementById('firstReminderInput').value = firstReminderTime;
-    document.getElementById('secondReminderInput').value = secondNastaliq || secondReminderTime;
+    document.getElementById('secondReminderInput').value = secondReminderTime;
 }
 
 function formatTimeLocalized(time) {
     const [h, m] = time.split(':');
-    let hour = parseInt(h, 10);
-    if (currentLang === 'en') {
-        const p = hour >= 12 ? 'PM' : 'AM';
-        hour = hour % 12 || 12;
-        return `${hour}:${m} ${p}`;
-    } else if (currentLang === 'ar') {
-        const p = hour >= 12 ? 'مساءً' : 'صباحاً';
-        hour = hour % 12 || 12;
-        return `${convertToUrduNumbers(hour)}:${convertToUrduNumbers(m)} ${p}`;
-    } else {
-        const p = hour >= 12 ? 'بجے' : 'صبح';
-        hour = hour % 12 || 12;
-        return `${convertToUrduNumbers(hour)}:${convertToUrduNumbers(m)} ${p}`;
+    const hourStr = String(parseInt(h, 10)).padStart(2, '0');
+    const minStr = String(parseInt(m, 10)).padStart(2, '0');
+    const formatted24 = `${hourStr}:${minStr}`;
+
+    if (currentLang === 'ur' || currentLang === 'ar') {
+        return convertToUrduNumbers(formatted24);
     }
+    return formatted24;
 }
 
 function convertToUrduNumbers(num) {
