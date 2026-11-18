@@ -9,7 +9,7 @@
     <title>نماز یاد دہانی - Salah Reminder</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="style.css?v=3.7">
+    <link rel="stylesheet" href="style.css?v=3.8">
 </head>
 <body>
     <!-- Main Screen -->
@@ -180,6 +180,10 @@
                     </select>
                 </div>
                 <div class="setting-item">
+                    <label id="lblGeoText">GPS Auto-Detect:</label>
+                    <button onclick="detectUserLocation()" class="btn-permission" id="btnGeoDetect">📍 Detect GPS</button>
+                </div>
+                <div class="setting-item">
                     <label id="lblMethodText">Calculation Method:</label>
                     <select id="methodSelect" class="setting-select">
                         <option value="Karachi">University of Islamic Sciences, Karachi</option>
@@ -197,8 +201,8 @@
         </div>
     </div>
 
-    <script src="prayer-times.js?v=3.7"></script>
-    <script src="app.js?v=3.7"></script>
+    <script src="prayer-times.js?v=3.8"></script>
+    <script src="app.js?v=3.8"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
