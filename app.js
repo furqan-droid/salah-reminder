@@ -1,6 +1,7 @@
 /**
- * Salah Reminder v3.7 - Complete Application Logic
- * Includes: Enforced LTR writing direction for all languages, precise time pickers, and timezone-aware clock.
+ * Salah Reminder v3.8 - Complete Application Logic
+ * Includes: Wake Lock API, GPS Geolocation Auto-Detection, Advanced TTS Voice Matching, 
+ * LTR Locked Layout, Time-based Reminders, and Timezone-aware Clock.
  */
 
 const translations = {
@@ -38,6 +39,7 @@ const translations = {
         userNameLabel: "یاد دہانی کا نام:",
         secLocation: "🌍 مقام اور حساب کتاب",
         locationLabel: "شہر / مقام:",
+        geoDetectBtn: "📍 GPS تلاش کریں",
         methodLabel: "حساب کتاب کا طریقہ:",
         saveBtn: "💾 ترتیبات محفوظ کریں",
         savedAlert: "✅ ترتیبات کامیابی سے محفوظ ہو گئیں!"
@@ -76,6 +78,7 @@ const translations = {
         userNameLabel: "Reminder Name:",
         secLocation: "🌍 Location & Calculation",
         locationLabel: "City / Location:",
+        geoDetectBtn: "📍 Detect GPS",
         methodLabel: "Calculation Method:",
         saveBtn: "💾 Save Settings",
         savedAlert: "✅ Settings saved successfully!"
@@ -114,6 +117,7 @@ const translations = {
         userNameLabel: "اسم الشخص للتذكير:",
         secLocation: "🌍 الموقع والحساب",
         locationLabel: "المدينة / الموقع:",
+        geoDetectBtn: "📍 تحديد الموقع",
         methodLabel: "طريقة الحساب:",
         saveBtn: "💾 حفظ الإعدادات",
         savedAlert: "✅ تم حفظ الإعدادات بنجاح!"
@@ -150,6 +154,7 @@ let calculator = new PrayerTimesCalculator();
 let todayPrayers = {};
 let nextPrayer = null;
 let currentRingtone = null;
+let wakeLock = null;
 
 let currentLang = localStorage.getItem('lang') || 'ur';
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
@@ -157,6 +162,8 @@ let volume = parseFloat(localStorage.getItem('volume') || '0.8');
 let ringtoneType = localStorage.getItem('ringtone') || 'chime';
 let userName = localStorage.getItem('userName') || 'Muhammad';
 let selectedCityKey = localStorage.getItem('cityKey') || 'karachi';
+let customLat = parseFloat(localStorage.getItem('customLat') || '0');
+let customLng = parseFloat(localStorage.getItem('customLng') || '0');
 let calcMethod = localStorage.getItem('calcMethod') || 'Karachi';
 let firstReminderTime = localStorage.getItem('firstReminderTime') || '05:00';
 let secondReminderTime = localStorage.getItem('secondReminderTime') || '12:00';
@@ -179,15 +186,63 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateCitySettings(key) {
-    const c = cityDatabase[key] || cityDatabase.karachi;
-    calculator.setLocation(c.lat, c.lng, c.tz);
+    if (key === 'custom' && customLat !== 0 && customLng !== 0) {
+        const offset = -new Date().getTimezoneOffset() / 60;
+        calculator.setLocation(customLat, customLng, offset);
+    } else {
+        const c = cityDatabase[key] || cityDatabase.karachi;
+        calculator.setLocation(c.lat, c.lng, c.tz);
+    }
 }
 
 function getSelectedCityTime() {
-    const c = cityDatabase[selectedCityKey] || cityDatabase.karachi;
+    let tzOffset = 5;
+    if (selectedCityKey === 'custom') {
+        tzOffset = -new Date().getTimezoneOffset() / 60;
+    } else {
+        const c = cityDatabase[selectedCityKey] || cityDatabase.karachi;
+        tzOffset = c.tz;
+    }
     const now = new Date();
     const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-    return new Date(utcTime + (3600000 * c.tz));
+    return new Date(utcTime + (3600000 * tzOffset));
+}
+
+function detectUserLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(position => {
+        customLat = position.coords.latitude;
+        customLng = position.coords.longitude;
+        selectedCityKey = 'custom';
+        
+        localStorage.setItem('customLat', customLat);
+        localStorage.setItem('customLng', customLng);
+        localStorage.setItem('cityKey', 'custom');
+
+        updateCitySettings('custom');
+        initApp();
+        alert("✅ GPS Location detected and applied successfully!");
+    }, () => {
+        alert("❌ Unable to retrieve your GPS location.");
+    });
+}
+
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {}
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock) {
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+    }
 }
 
 function initApp() {
@@ -490,6 +545,7 @@ function stopRingtone() {
 }
 
 function showCallScreen(prayer, isFirst) {
+    requestWakeLock();
     document.getElementById('mainScreen').classList.remove('active');
     document.getElementById('settingsScreen').classList.remove('active');
     if (document.getElementById('reportScreen')) document.getElementById('reportScreen').classList.remove('active');
@@ -562,6 +618,13 @@ async function getDynamicReminderScript(lang, stage, prayerName) {
         .replace(/\{time\}/g, targetTime);
 }
 
+function getBestVoice(langCode) {
+    if (!('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    const prefix = langCode.split('-')[0];
+    return voices.find(v => v.lang.toLowerCase().includes(langCode.toLowerCase()) || v.lang.toLowerCase().includes(prefix)) || null;
+}
+
 async function answerCall() {
     stopRingtone();
     document.getElementById('callScreen').classList.remove('active');
@@ -588,7 +651,13 @@ async function answerCall() {
     if ('speechSynthesis' in window && soundEnabled) {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = { ur: 'ur-PK', en: 'en-US', ar: 'ar-SA' }[currentLang] || 'ur-PK';
+        
+        const langMap = { ur: 'ur-PK', en: 'en-US', ar: 'ar-SA' };
+        const targetLangCode = langMap[currentLang] || 'ur-PK';
+        u.lang = targetLangCode;
+        
+        const bestVoice = getBestVoice(targetLangCode);
+        if (bestVoice) u.voice = bestVoice;
 
         if (usingEarphones) {
             u.volume = Math.min(1, volume * 0.55);
@@ -600,19 +669,24 @@ async function answerCall() {
             u.rate = 0.98;
         }
 
-        u.onend = () => setTimeout(endCall, 2000);
+        u.onend = () => {
+            releaseWakeLock();
+            setTimeout(endCall, 2000);
+        };
         window.speechSynthesis.speak(u);
     }
 }
 
 function dismissCall() {
     stopRingtone();
+    releaseWakeLock();
     document.getElementById('callScreen').classList.remove('active');
     document.getElementById('mainScreen').classList.add('active');
 }
 
 function endCall() {
     stopRingtone();
+    releaseWakeLock();
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     document.getElementById('activeCallScreen').classList.remove('active');
     document.getElementById('mainScreen').classList.add('active');
@@ -668,7 +742,7 @@ function saveSettings() {
 function applyLanguage() {
     const t = translations[currentLang] || translations.ur;
     document.documentElement.lang = currentLang;
-    document.documentElement.dir = "ltr"; // Force strict left-to-right alignment across all languages
+    document.documentElement.dir = "ltr";
 
     document.getElementById('headerTitle').textContent = t.title;
     document.getElementById('headerSubtitle').textContent = t.subtitle;
@@ -706,6 +780,7 @@ function applyLanguage() {
     document.getElementById('lblUserName').textContent = t.userNameLabel;
     document.getElementById('lblLocationGroup').textContent = t.secLocation;
     document.getElementById('lblCityText').textContent = t.locationLabel;
+    document.getElementById('lblGeoText').textContent = t.geoDetectBtn;
     document.getElementById('lblMethodText').textContent = t.methodLabel;
     document.getElementById('saveSettingsBtn').textContent = t.saveBtn;
 }
