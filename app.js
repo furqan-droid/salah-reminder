@@ -1,9 +1,9 @@
 /**
  * Salah Reminder v3.3 - Complete Application Logic
  * Includes: Dynamic Internet-Synced Voice Scripts (with offline fallback),
- * Multi-language (Urdu/English/Arabic), Urdu digit conversion,
- * Custom Reminder Offsets, AudioContext Ringtones, Web Push Notifications,
- * Interactive Prayer Tracker, and Weekly Summary Report.
+ * Headset/Earphone Mode Detection, Multi-language (Urdu/English/Arabic),
+ * Urdu digit conversion, Custom Reminder Offsets, AudioContext Ringtones,
+ * Web Push Notifications, Interactive Prayer Tracker, and Weekly Summary Report.
  */
 
 const translations = {
@@ -412,7 +412,7 @@ function triggerSystemNotification(prayer, isFirst) {
         const body = isFirst
             ? (currentLang === 'en' ? `${firstReminderMins} mins remaining until ${prayer.name}` : `نماز کا وقت ہونے میں ${firstReminderMins} منٹ باقی ہیں۔`)
             : (currentLang === 'en' ? `It is time for ${prayer.name}` : `نماز کا وقت ہو گیا ہے (${formatTimeLocalized(prayer.time)})۔`);
-        new Notification(title, { body, icon: 'icon-192.png', tag: prayer.key });
+        new Notification(title, { body, icon: 'icon-192.png', tag: `${prayer.key}_${isFirst ? 1 : 2}` });
     }
 }
 
@@ -500,7 +500,19 @@ function showCallScreen(prayer, isFirst) {
     playRingtone();
 }
 
-// Fetch live script from reminders.json with 3-second timeout & offline fallback
+async function isHeadsetConnected() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return false;
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.some(d => 
+            d.kind === 'audiooutput' && 
+            /headphone|headset|earphone|bluetooth|airpods|buds/i.test(d.label)
+        );
+    } catch (e) {
+        return false;
+    }
+}
+
 async function getDynamicReminderScript(lang, stage, prayerName) {
     let scriptPool = defaultVoiceScripts;
 
@@ -521,7 +533,6 @@ async function getDynamicReminderScript(lang, stage, prayerName) {
             }
         }
     } catch (err) {
-        // Offline or timeout: check last cached remote scripts before falling back to hardcoded defaults
         const cached = localStorage.getItem('cachedReminders');
         if (cached) {
             try { scriptPool = JSON.parse(cached); } catch (e) {}
@@ -556,11 +567,32 @@ async function answerCall() {
 
     document.getElementById('reminderText').innerHTML = `<p>${text}</p>`;
     
+    const usingEarphones = await isHeadsetConnected();
+    const badge = document.getElementById('audioOutputBadge');
+    if (badge) {
+        if (usingEarphones) {
+            badge.style.display = 'block';
+            badge.textContent = currentLang === 'en' ? '🎧 Headset Mode (In-Ear)' : (currentLang === 'ar' ? '🎧 وضع سماعة الرأس' : '🎧 ہیڈسیٹ موڈ (کان میں)');
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
     if ('speechSynthesis' in window && soundEnabled) {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
         u.lang = { ur: 'ur-PK', en: 'en-US', ar: 'ar-SA' }[currentLang] || 'ur-PK';
-        u.volume = volume;
+
+        if (usingEarphones) {
+            u.volume = Math.min(1, volume * 0.55);
+            u.pitch = 0.95;
+            u.rate = 1.02;
+        } else {
+            u.volume = volume;
+            u.pitch = 1.0;
+            u.rate = 0.98;
+        }
+
         u.onend = () => setTimeout(endCall, 2000);
         window.speechSynthesis.speak(u);
     }
@@ -682,7 +714,6 @@ function convertToUrduNumbers(num) {
     return String(num).split('').map(c => (c >= '0' && c <= '9') ? d[parseInt(c, 10)] : c).join('');
 }
 
-// Auto-reset daily reminder flags every hour
 setInterval(() => {
     const todayStr = new Date().toDateString();
     for (let i = localStorage.length - 1; i >= 0; i--) {
