@@ -1,8 +1,8 @@
 /**
- * Salah Reminder v3.2 - Complete Application Logic
- * Includes: Multi-language (Urdu/English/Arabic), Urdu digit conversion,
- * Custom Reminder Offsets, AudioContext Ringtones, Web Push Notifications,
- * Interactive Prayer Tracker, and Weekly Summary Report.
+- Salah Reminder v3.2 - Complete Application Logic
+- Includes: Multi-language (Urdu/English/Arabic), Urdu digit conversion,
+- Custom Reminder Offsets, AudioContext Ringtones, Web Push Notifications,
+- Interactive Prayer Tracker, and Weekly Summary Report.
  */
 
 const translations = {
@@ -126,7 +126,7 @@ let todayPrayers = {};
 let nextPrayer = null;
 let currentRingtone = null;
 
-let currentLang = localStorage.getItem('lang') || 'ur';
+let currentLang = localStorage.getItem('lang') || document.getElementById('langSelect')?.value || 'ur';
 let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
 let volume = parseFloat(localStorage.getItem('volume') || '0.8');
 let ringtoneType = localStorage.getItem('ringtone') || 'chime';
@@ -138,6 +138,13 @@ let secondReminderOffset = parseInt(localStorage.getItem('secondReminderOffset')
 let currentDateStr = new Date().toDateString();
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Sync dropdown and language state immediately on load
+    const langSelect = document.getElementById('langSelect');
+    if (langSelect) {
+        currentLang = localStorage.getItem('lang') || langSelect.value;
+        langSelect.value = currentLang;
+    }
+
     updateCitySettings(selectedCityKey);
     calculator.setMethod(calcMethod);
     initApp();
@@ -207,7 +214,7 @@ function displayTracker() {
     trackerList.innerHTML = '';
     
     const todayKey = new Date().toDateString();
-    const btnTextDone = currentLang === 'en' ? '✓ Completed' : (currentLang === 'ar' ? '✓ تم' : '✓ ادا کر لی');
+    const btnTextDone = currentLang === 'en' ? '✓ Completed' : (currentLang === 'ar' ? '✓ تم' : '✓ ادا कर لی');
     const btnTextPending = currentLang === 'en' ? '○ Pending' : (currentLang === 'ar' ? '○ باقي' : '○ باقی ہے');
 
     for (let k in todayPrayers) {
@@ -470,11 +477,11 @@ function showCallScreen(prayer, isFirst) {
     document.getElementById('callPrayerTime').textContent = formatTimeLocalized(prayer.time);
 
     if (currentLang === 'en') {
-        document.getElementById('callMessage').textContent = isFirst ? `${firstReminderMins} mins remaining` : `It is time for prayer`;
+        document.getElementById('callMessage').textContent = isFirst ? `Heads up: ${firstReminderMins} mins remaining` : `Final Call: It is time for prayer`;
     } else if (currentLang === 'ar') {
-        document.getElementById('callMessage').textContent = isFirst ? `متبقي ${firstReminderMins} دقائق` : `حان وقت الصلاة`;
+        document.getElementById('callMessage').textContent = isFirst ? `تنبيه: متبقي ${firstReminderMins} دقائق` : `نداء نهائي: حان وقت الصلاة`;
     } else {
-        document.getElementById('callMessage').textContent = isFirst ? `نماز میں ${convertToUrduNumbers(firstReminderMins)} منٹ باقی ہیں` : `نماز کا وقت ہو گیا ہے`;
+        document.getElementById('callMessage').textContent = isFirst ? `پہلی یاد دہانی: نماز میں ${convertToUrduNumbers(firstReminderMins)} منٹ باقی ہیں` : `آخری یاد دہانی: نماز کا وقت ہو گیا ہے`;
     }
     window.currentPrayer = { prayer, isFirst };
     playRingtone();
@@ -484,16 +491,28 @@ function answerCall() {
     stopRingtone();
     document.getElementById('callScreen').classList.remove('active');
     document.getElementById('activeCallScreen').classList.add('active');
-    const { prayer } = window.currentPrayer;
+    const { prayer, isFirst } = window.currentPrayer;
     document.getElementById('activePrayerName').textContent = prayer.name;
 
     let text = '';
     if (currentLang === 'en') {
-        text = `Assalamu Alaikum ${userName}. It is time for ${prayer.name} prayer. May Allah accept our prayers.`;
+        if (isFirst) {
+            text = `Assalamu Alaikum ${userName}. Heads up, ${prayer.name} prayer is approaching in ${firstReminderMins} minutes. Please prepare for Wudu.`;
+        } else {
+            text = `Assalamu Alaikum ${userName}. It is now time for ${prayer.name} prayer. May Allah accept our prayers.`;
+        }
     } else if (currentLang === 'ar') {
-        text = `السلام عليكم ${userName}. حان وقت صلاة ${prayer.name}. تقبل الله طاعتكم.`;
+        if (isFirst) {
+            text = `السلام عليكم ${userName}. تنبيه، اقتربت صلاة ${prayer.name} خلال ${firstReminderMins} دقائق. يرجى الاستعداد للوضوء.`;
+        } else {
+            text = `السلام عليكم ${userName}. حان الآن وقت صلاة ${prayer.name}. تقبل الله طاعتكم.`;
+        }
     } else {
-        text = `السلام علیکم ${userName}۔ ${prayer.name} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں نماز کی توفیق دے۔`;
+        if (isFirst) {
+            text = `السلام علیکم ${userName}۔ ${prayer.name} کی نماز میں ${convertToUrduNumbers(firstReminderMins)} منٹ باقی ہیں۔ برائے مہربانی وضو کی تیاری کریں۔`;
+        } else {
+            text = `السلام علیکم ${userName}۔ ${prayer.name} کی نماز کا وقت ہو چکا ہے۔ اللہ ہمیں نماز کی توفیق دے۔`;
+        }
     }
     document.getElementById('reminderText').innerHTML = `<p>${text}</p>`;
     
@@ -570,7 +589,8 @@ function applyLanguage() {
 }
 
 function loadSettingsUI() {
-    document.getElementById('langSelect').value = currentLang;
+    const langSelect = document.getElementById('langSelect');
+    if (langSelect) langSelect.value = currentLang;
     document.getElementById('soundEnabled').checked = soundEnabled;
     const volPct = Math.round(volume * 100);
     document.getElementById('volumeControl').value = volPct;
@@ -583,7 +603,13 @@ function loadSettingsUI() {
     document.getElementById('secondReminderInput').value = secondReminderOffset;
 }
 
-function updateLanguage(v) { localStorage.setItem('lang', v); currentLang = v; applyLanguage(); initApp(); updateNotificationStatus(); }
+function updateLanguage(v) { 
+    localStorage.setItem('lang', v); 
+    currentLang = v; 
+    applyLanguage(); 
+    initApp(); 
+    updateNotificationStatus(); 
+}
 function updateSoundSetting() { soundEnabled = document.getElementById('soundEnabled').checked; localStorage.setItem('soundEnabled', soundEnabled); }
 function updateVolume() { const v = document.getElementById('volumeControl').value; volume = v / 100; document.getElementById('volumeValue').textContent = `${v}%`; localStorage.setItem('volume', volume); }
 function updateRingtone() { ringtoneType = document.getElementById('ringtoneSelect').value; localStorage.setItem('ringtone', ringtoneType); }
